@@ -1,0 +1,25 @@
+## Handy Shortcuts
+# This file is purely optional and just allows easy shortcuts
+# for running all the function exposed in Docker.
+# To see original commands or to use without compose,
+# see Containerfile
+
+# docker compose run --rm gemini
+
+## 
+
+services:
+  # 5. Run Gemini
+  gemini:
+    build:
+      context: .
+      dockerfile: Containerfile
+      target: gemini
+    image: rssplanet-gemini
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ~/.gemini:/root/.gemini
+    command: gemini
+    stdin_open: true
+    tty: true
