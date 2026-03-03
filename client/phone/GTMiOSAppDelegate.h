@@ -1,12 +1,15 @@
 #import <UIKit/UIKit.h>
 
+@class RootViewController;
+
 /**
  * The primary application delegate for TheDL on iOS.
  */
 @interface GTMiOSAppDelegate : NSObject <UIApplicationDelegate> {
  @private
   UIWindow *_window;
-  UIViewController *_viewController;
+  UINavigationController *_navigationController;
+  RootViewController *_rootViewController;
 }
 
 /** Returns the main application window. */

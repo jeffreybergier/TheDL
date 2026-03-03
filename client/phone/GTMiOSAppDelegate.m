@@ -1,4 +1,5 @@
 #import "GTMiOSAppDelegate.h"
+#import "RootViewController.h"
 
 @implementation GTMiOSAppDelegate
 
@@ -18,19 +19,20 @@
   NSLog(@"[GTMiOSAppDelegate application:didFinishLaunchingWithOptions:] Started TheDL on iOS.");
   
   _window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-  _window.backgroundColor = [UIColor whiteColor];
+  [_window setBackgroundColor:[UIColor whiteColor]];
   
-  _viewController = [[UIViewController alloc] init];
-  _viewController.view.backgroundColor = [UIColor blueColor]; // Retro test color
+  _rootViewController = [[RootViewController alloc] init];
+  _navigationController = [[UINavigationController alloc] initWithRootViewController:_rootViewController];
   
-  [_window addSubview:_viewController.view];
+  [_window addSubview:[_navigationController view]];
   [_window makeKeyAndVisible];
   
   return YES;
 }
 
 - (void)dealloc {
-  [_viewController release];
+  [_navigationController release];
+  [_rootViewController release];
   [_window release];
   [super dealloc];
 }

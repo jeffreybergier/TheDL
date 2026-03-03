@@ -13,6 +13,7 @@
 - **Technical Constraints for Legacy Compatibility:**
     - **No Automatic Reference Counting (ARC):** Always use manual retain/release/autorelease.
     - **No Property Syntax:** Do not use `@property` or `@synthesize`. Use manual instance variables and accessor methods instead.
+    - **No Dot Syntax:** Do not use dot notation for property access or method calls (e.g., `object.name`). Always use square bracket message sending (e.g., `[object name]` or `[object setName:...]`).
     - **Older Objective-C Runtime:** Target the older Objective-C ABI for 32-bit platforms (Mac OS X 10.4 and iOS 3.1).
 - Lastly, please always follow the google objective-c style guide which I pasted below for your reference
 

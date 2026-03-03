@@ -24,7 +24,7 @@
                                        styleMask:styleMask
                                          backing:NSBackingStoreBuffered
                                            defer:NO];
-  [_window setTitle:@"TheDL"];
+  [_window setTitle:@"The"];
   [_window center];
   [_window makeKeyAndOrderFront:nil];
 }

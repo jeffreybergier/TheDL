@@ -142,7 +142,7 @@ debug: clean_debug $(DEBUG_DIR)/libXP_Mac.a $(DEBUG_DIR)/libXP_Neko.a $(DEBUG_DI
 	
 	# iOS Phone Device (Debug)
 	$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=3.1 $(ARC_FLAGS) -g -DDEBUG \
-		$(IOS_FW) $(PHONE_DIR)/ios_main.m $(PHONE_DIR)/GTMiOSAppDelegate.m \
+		$(IOS_FW) $(PHONE_DIR)/ios_main.m $(PHONE_DIR)/GTMiOSAppDelegate.m $(PHONE_DIR)/RootViewController.m \
 		$(DEBUG_DIR)/libXP_iOS.a $(DEBUG_DIR)/libBase_iOS.a -o $(DEBUG_DIR)/hello_phone $(LIB_INCLUDES)
 	mkdir -p "$(DEBUG_DIR)/TheDL-Phone.app"
 	cp $(DEBUG_DIR)/hello_phone "$(DEBUG_DIR)/TheDL-Phone.app/TheDL"
@@ -150,8 +150,9 @@ debug: clean_debug $(DEBUG_DIR)/libXP_Mac.a $(DEBUG_DIR)/libXP_Neko.a $(DEBUG_DI
 
 	# iOS Simulator (Debug)
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=3.1 -Wl,-no_pie -g -DDEBUG \
-		$(IOS_FW) $(PHONE_DIR)/ios_main.m $(PHONE_DIR)/GTMiOSAppDelegate.m \
+		$(IOS_FW) $(PHONE_DIR)/ios_main.m $(PHONE_DIR)/GTMiOSAppDelegate.m $(PHONE_DIR)/RootViewController.m \
 		$(DEBUG_DIR)/libXP_Sim.a $(DEBUG_DIR)/libBase_Sim.a -o $(DEBUG_DIR)/hello_sim $(LIB_INCLUDES)
+
 	mkdir -p "$(DEBUG_DIR)/TheDL-Sim.app"
 	cp $(DEBUG_DIR)/hello_sim "$(DEBUG_DIR)/TheDL-Sim.app/TheDL"
 	cp $(PHONE_DIR)/Info_iOS.plist "$(DEBUG_DIR)/TheDL-Sim.app/Info.plist"
@@ -178,7 +179,7 @@ release: clean_release $(RELEASE_DIR)/libXP_Mac.a $(RELEASE_DIR)/libXP_Neko.a $(
 	
 	# iOS Phone (IPA Release)
 	$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=3.1 $(IOS_FW) -O3 \
-		$(PHONE_DIR)/ios_main.m $(PHONE_DIR)/GTMiOSAppDelegate.m \
+		$(PHONE_DIR)/ios_main.m $(PHONE_DIR)/GTMiOSAppDelegate.m $(PHONE_DIR)/RootViewController.m \
 		$(RELEASE_DIR)/libXP_iOS.a $(RELEASE_DIR)/libBase_iOS.a -o $(RELEASE_DIR)/hello_ios $(LIB_INCLUDES)
 	mkdir -p "$(RELEASE_DIR)/TheDL_iOS.app"
 	cp $(RELEASE_DIR)/hello_ios "$(RELEASE_DIR)/TheDL_iOS.app/TheDL"
