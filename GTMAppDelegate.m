@@ -2,13 +2,22 @@
 
 @implementation GTMAppDelegate
 
-@synthesize window = _window;
+- (NSWindow *)window {
+  return _window;
+}
+
+- (void)setWindow:(NSWindow *)window {
+  if (_window != window) {
+    [_window release];
+    _window = [window retain];
+  }
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
   NSLog(@"[GTMAppDelegate applicationDidFinishLaunching:] Started TheDL on macOS.");
 
   NSRect frame = NSMakeRect(0, 0, 480, 320);
-  NSUInteger styleMask = NSTitledWindowMask | NSClosableWindowMask |
+  unsigned int styleMask = NSTitledWindowMask | NSClosableWindowMask |
                          NSMiniaturizableWindowMask | NSResizableWindowMask;
 
   _window = [[NSWindow alloc] initWithContentRect:frame

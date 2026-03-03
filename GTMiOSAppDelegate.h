@@ -6,9 +6,17 @@
 @interface GTMiOSAppDelegate : NSObject <UIApplicationDelegate> {
  @private
   UIWindow *_window;
+  UIViewController *_viewController;
 }
 
-/** The main application window. */
-@property(nonatomic, retain) UIWindow *window;
+/** Returns the main application window. */
+- (UIWindow *)window;
+
+/**
+ * Sets the main application window.
+ *
+ * @param window The window to set.
+ */
+- (void)setWindow:(UIWindow *)window;
 
 @end

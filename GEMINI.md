@@ -10,6 +10,10 @@
 - You can access this VM by using the config and id_rsa private key in the .ssh folder in the repo
 - Use scp to copy files from the local repo to the mavericks machine before trying to build them. Save them in /Users/me/Desktop/TheDL
 - Does this sound like a fun project?
+- **Technical Constraints for Legacy Compatibility:**
+    - **No Automatic Reference Counting (ARC):** Always use manual retain/release/autorelease.
+    - **No Property Syntax:** Do not use `@property` or `@synthesize`. Use manual instance variables and accessor methods instead.
+    - **Older Objective-C Runtime:** Target the older Objective-C ABI for 32-bit platforms (Mac OS X 10.4 and iOS 3.1).
 - Lastly, please always follow the google objective-c style guide which I pasted below for your reference
 
 # Google Objective-C Style Guide

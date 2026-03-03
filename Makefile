@@ -1,20 +1,25 @@
 # --- Toolchain & Paths ---
 CC = clang
 XCODE_PATH = /Applications/Xcode.app/Contents/Developer
+NEKO_CC = /Developer/usr/bin/gcc-4.0
+
+# SDKs
 IOS_SDK = $(XCODE_PATH)/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.2.sdk
 SIM_SDK = $(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator8.2.sdk
-MAC_SDK = $(XCODE_PATH)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk
+MAC_MODERN_SDK = $(XCODE_PATH)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk
+MAC_NEKO_SDK = /Developer/SDKs/MacOSX10.4u.sdk
 
 # --- Memory Management ---
+# Clang supports ARC, GCC 4.0 doesn't.
 # Using manual retain/release as requested in GEMINI.md
-MM_FLAGS = -fno-objc-arc
+ARC_FLAGS = -fno-objc-arc
 
 # --- Warning Flags ---
 CFLAGS = -Wall -Werror
 
 # --- Architecture & SDK Flags ---
-COMMON_FW = $(MM_FLAGS) $(CFLAGS) -framework Foundation -framework CoreData
-IOS_FW = $(COMMON_FW) -framework UIKit
+COMMON_FW = -framework Foundation -framework CoreData
+IOS_FW = $(ARC_FLAGS) $(COMMON_FW) -framework UIKit
 MAC_FW = $(COMMON_FW) -framework AppKit -framework Cocoa
 
 # iOS: armv7, armv7s, arm64 (Min 3.1)
@@ -25,23 +30,34 @@ IOS_FLAGS = $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=3.1
 SIM_ARCHS = -arch i386
 SIM_FLAGS = $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=3.1 -Wl,-no_pie
 
-# macOS: ppc, i386, x86_64 (Min 10.4)
-# Note: Xcode 6.2 (Clang) does not natively support -arch ppc.
-# We'll use i386 and x86_64 for now, but I've kept ppc in the ARCHS to match your goal.
-MAC_ARCHS = -arch i386 -arch x86_64
-MAC_FLAGS = $(MAC_ARCHS) -isysroot $(MAC_SDK) -mmacosx-version-min=10.4
+# macOS Modern: x86_64, i386 (Min 10.7)
+MAC_MODERN_ARCHS = -arch x86_64 -arch i386
+MAC_MODERN_FLAGS = $(MAC_MODERN_ARCHS) -isysroot $(MAC_MODERN_SDK) -mmacosx-version-min=10.7 $(ARC_FLAGS)
+
+# macOS Neko: ppc, i386 (Min 10.4)
+MAC_NEKO_ARCHS = -arch ppc -arch i386
+MAC_NEKO_FLAGS = $(MAC_NEKO_ARCHS) -isysroot $(MAC_NEKO_SDK) -mmacosx-version-min=10.4
 
 # --- Build Targets ---
-all: ios_bundle mac_bundle
+all: ios_bundle mac_bundle neko_bundle
 
-# 1. macOS Bundle (.app)
+# 1. macOS Modern Bundle (.app)
 mac_bundle: 
-	@echo "Building macOS Bundle (i386, x86_64)..."
-	$(CC) $(MAC_FLAGS) $(MAC_FW) mac_main.m GTMAppDelegate.m -o hello_mac
+	@echo "Building macOS Modern Bundle (10.10)..."
+	$(CC) $(MAC_MODERN_FLAGS) $(CFLAGS) $(MAC_FW) mac_main.m GTMAppDelegate.m -o hello_mac
 	mkdir -p "TheDL_Mac.app/Contents/MacOS"
 	mkdir -p "TheDL_Mac.app/Contents/Resources"
 	cp hello_mac "TheDL_Mac.app/Contents/MacOS/TheDL"
 	cp Info_Mac.plist "TheDL_Mac.app/Contents/Info.plist"
+
+# 1.5 macOS Neko Bundle (.app)
+neko_bundle: 
+	@echo "Building macOS Neko Bundle (10.4)..."
+	$(NEKO_CC) $(MAC_NEKO_FLAGS) -Wall $(MAC_FW) mac_main.m GTMAppDelegate.m -o hello_neko
+	mkdir -p "TheDL_Neko.app/Contents/MacOS"
+	mkdir -p "TheDL_Neko.app/Contents/Resources"
+	cp hello_neko "TheDL_Neko.app/Contents/MacOS/TheDL Neko"
+	cp Info_Neko.plist "TheDL_Neko.app/Contents/Info.plist"
 
 # 2. iOS Bundle (.app)
 ios_bundle:
@@ -68,4 +84,4 @@ ipa: ios_bundle
 	rm -rf Payload
 
 clean:
-	rm -rf *.app *.ipa hello_ios hello_mac Payload
+	rm -rf *.app *.ipa hello_ios hello_mac hello_neko hello_sim Payload

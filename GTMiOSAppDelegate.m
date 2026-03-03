@@ -2,7 +2,16 @@
 
 @implementation GTMiOSAppDelegate
 
-@synthesize window = _window;
+- (UIWindow *)window {
+  return _window;
+}
+
+- (void)setWindow:(UIWindow *)window {
+  if (_window != window) {
+    [_window release];
+    _window = [window retain];
+  }
+}
 
 - (BOOL)application:(UIApplication *)application 
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -11,17 +20,17 @@
   _window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
   _window.backgroundColor = [UIColor whiteColor];
   
-  UIViewController *rootVC = [[UIViewController alloc] init];
-  rootVC.view.backgroundColor = [UIColor blueColor]; // Retro test color
+  _viewController = [[UIViewController alloc] init];
+  _viewController.view.backgroundColor = [UIColor blueColor]; // Retro test color
   
-  [_window setRootViewController:rootVC];
+  [_window addSubview:_viewController.view];
   [_window makeKeyAndVisible];
   
-  [rootVC release];
   return YES;
 }
 
 - (void)dealloc {
+  [_viewController release];
   [_window release];
   [super dealloc];
 }

@@ -9,9 +9,9 @@
 # docker run -it --rm -v "$(pwd):/app" -v ~/.gemini:/root/.gemini thedl-gemini gemini
 
 # --- Gemini ---
-FROM node:20-slim
-ENV FORCE_COLOR=1
+FROM node:20-slim AS gemini
 EXPOSE 3000
+ENV FORCE_COLOR=1
 RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
