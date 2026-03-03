@@ -22,12 +22,14 @@ BASE_DIR = $(LIB_DIR)/BaseLibrary
 BUILD_DIR = build
 DEBUG_DIR = $(BUILD_DIR)/debug
 RELEASE_DIR = $(BUILD_DIR)/release
+TEST_DIR = $(BUILD_DIR)/tests
 
 # --- Flags ---
 ARC_FLAGS = -fno-objc-arc
 COMMON_FW = -framework Foundation -framework CoreData
 IOS_FW = $(ARC_FLAGS) $(COMMON_FW) -framework UIKit
 MAC_FW = $(COMMON_FW) -framework AppKit -framework Cocoa
+TEST_FW = -framework XCTest
 
 # Architectures
 IOS_ARCHS = -arch armv7 -arch armv7s -arch arm64
@@ -40,9 +42,9 @@ LIB_INCLUDES = -I$(XP_DIR) -I$(BASE_DIR)
 
 # --- Build Rules ---
 
-.PHONY: all debug release clean
+.PHONY: all debug release clean test_mac test_ios
 
-all: debug
+all: debug test_mac test_ios
 
 # --- Static Libraries (Debug) ---
 
@@ -182,6 +184,28 @@ release: clean_release $(RELEASE_DIR)/libXP_Mac.a $(RELEASE_DIR)/libXP_Neko.a $(
 	cp $(RELEASE_DIR)/hello_ios "$(RELEASE_DIR)/TheDL_iOS.app/TheDL"
 	cp $(PHONE_DIR)/Info_iOS.plist "$(RELEASE_DIR)/TheDL_iOS.app/Info.plist"
 	cd $(RELEASE_DIR) && mkdir -p Payload && cp -R TheDL_iOS.app Payload/ && zip -qr TheDL.ipa Payload && rm -rf Payload TheDL_iOS.app
+
+# --- Testing ---
+
+test_mac: $(DEBUG_DIR)/libXP_Mac.a $(DEBUG_DIR)/libBase_Mac.a
+	@mkdir -p $(TEST_DIR)
+	$(CC) -arch x86_64 -isysroot $(MAC_MODERN_SDK) -mmacosx-version-min=10.7 $(ARC_FLAGS) \
+		$(MAC_FW) $(TEST_FW) tests/test_mac_main.m \
+		$(DEBUG_DIR)/libXP_Mac.a $(DEBUG_DIR)/libBase_Mac.a -o $(TEST_DIR)/test_runner $(LIB_INCLUDES) \
+		-F$(XCODE_PATH)/Platforms/MacOSX.platform/Developer/Library/Frameworks \
+		-Xlinker -rpath -Xlinker $(XCODE_PATH)/Platforms/MacOSX.platform/Developer/Library/Frameworks
+	@echo "Running Mac Tests..."
+	$(TEST_DIR)/test_runner
+
+test_ios: $(DEBUG_DIR)/libXP_Sim.a $(DEBUG_DIR)/libBase_Sim.a
+	@mkdir -p $(TEST_DIR)
+	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=3.1 $(ARC_FLAGS) \
+		$(IOS_FW) $(TEST_FW) -Wl,-no_pie tests/test_iphone_main.m \
+		$(DEBUG_DIR)/libXP_Sim.a $(DEBUG_DIR)/libBase_Sim.a -o $(TEST_DIR)/test_sim_runner $(LIB_INCLUDES) \
+		-F$(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks \
+		-Xlinker -rpath -Xlinker $(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks
+	@echo "Running iOS Simulator Tests..."
+	xcrun simctl spawn booted $(TEST_DIR)/test_sim_runner
 
 clean:
 	rm -rf $(BUILD_DIR)
