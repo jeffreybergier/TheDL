@@ -1,4 +1,5 @@
 #import "RootViewController.h"
+#import "TDLDownloadTableViewController.h"
 
 @implementation RootViewController
 
@@ -8,11 +9,11 @@
   [self setTitle:@"The"];
   
   UIViewController *downViewController = [[UIViewController alloc] init];
+  [downViewController setTitle:@"Down"];
   [[downViewController view] setBackgroundColor:[UIColor whiteColor]];
   [[downViewController tabBarItem] setTitle:@"Down"];
   
-  UIViewController *loadViewController = [[UIViewController alloc] init];
-  [[loadViewController view] setBackgroundColor:[UIColor lightGrayColor]];
+  TDLDownloadTableViewController *loadViewController = [[TDLDownloadTableViewController alloc] init];
   [[loadViewController tabBarItem] setTitle:@"Load"];
   
   [self setViewControllers:[NSArray arrayWithObjects:downViewController, loadViewController, nil]];

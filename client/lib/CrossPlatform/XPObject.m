@@ -13,4 +13,8 @@
 #endif
 }
 
+- (void)dealloc {
+  [super dealloc];
+}
+
 @end

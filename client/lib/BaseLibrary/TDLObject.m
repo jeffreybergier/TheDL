@@ -10,6 +10,10 @@
   _tag = tag;
 }
 
+- (void)dealloc {
+  [super dealloc];
+}
+
 - (NSString *)platformInfo {
   XPObject *xp = [[XPObject alloc] init];
   NSString *platform = [xp platformName];

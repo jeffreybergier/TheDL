@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 #import <UIKit/UIKit.h>
 #import "TDLObjectTests.m"
+#import "TDLDownloadTests.m"
 
 /**
  * A simple main entry point to run XCTest cases from the command line on iOS Simulator.
@@ -10,7 +11,7 @@ int main(int argc, char *argv[]) {
   
   // We don't need a full UIApplication for these logic tests, 
   // but XCTest expects a runtime environment.
-  XCTestSuite *suite = [XCTestSuite testSuiteForTestCaseClass:[TDLObjectTests class]];
+  XCTestSuite *suite = [XCTestSuite defaultTestSuite];
   XCTestRun *run = [suite run];
   
   printf("iOS Simulator Tests completed: %lu, failures: %lu\n", 
