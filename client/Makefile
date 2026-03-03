@@ -66,22 +66,22 @@ $(DEBUG_DIR)/libXP_Neko.a: $(XP_DIR)/XPObject.m
 	$(NEKO_CC) $(MAC_NEKO_ARCHS) -isysroot $(MAC_NEKO_SDK) -mmacosx-version-min=10.4 -g -DDEBUG -c $< -o $(DEBUG_DIR)/XP_Neko.o $(LIB_INCLUDES)
 	$(NEKO_AR) rcs $@ $(DEBUG_DIR)/XP_Neko.o
 
-$(DEBUG_DIR)/libBase_iOS.a: $(BASE_DIR)/TDLObject.m
+$(DEBUG_DIR)/libBase_iOS.a: $(BASE_DIR)/TDLObject.m $(DEBUG_DIR)/libXP_iOS.a
 	@mkdir -p $(DEBUG_DIR)
 	$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=3.1 $(ARC_FLAGS) -g -DDEBUG -c $< -o $(DEBUG_DIR)/Base_iOS.o $(LIB_INCLUDES)
 	$(AR) rcs $@ $(DEBUG_DIR)/Base_iOS.o
 
-$(DEBUG_DIR)/libBase_Sim.a: $(BASE_DIR)/TDLObject.m
+$(DEBUG_DIR)/libBase_Sim.a: $(BASE_DIR)/TDLObject.m $(DEBUG_DIR)/libXP_Sim.a
 	@mkdir -p $(DEBUG_DIR)
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=3.1 $(ARC_FLAGS) -g -DDEBUG -c $< -o $(DEBUG_DIR)/Base_Sim.o $(LIB_INCLUDES)
 	$(AR) rcs $@ $(DEBUG_DIR)/Base_Sim.o
 
-$(DEBUG_DIR)/libBase_Mac.a: $(BASE_DIR)/TDLObject.m
+$(DEBUG_DIR)/libBase_Mac.a: $(BASE_DIR)/TDLObject.m $(DEBUG_DIR)/libXP_Mac.a
 	@mkdir -p $(DEBUG_DIR)
 	$(CC) $(MAC_MODERN_ARCHS) -isysroot $(MAC_MODERN_SDK) -mmacosx-version-min=10.7 $(ARC_FLAGS) -g -DDEBUG -c $< -o $(DEBUG_DIR)/Base_Mac.o $(LIB_INCLUDES)
 	$(AR) rcs $@ $(DEBUG_DIR)/Base_Mac.o
 
-$(DEBUG_DIR)/libBase_Neko.a: $(BASE_DIR)/TDLObject.m
+$(DEBUG_DIR)/libBase_Neko.a: $(BASE_DIR)/TDLObject.m $(DEBUG_DIR)/libXP_Neko.a
 	@mkdir -p $(DEBUG_DIR)
 	$(NEKO_CC) $(MAC_NEKO_ARCHS) -isysroot $(MAC_NEKO_SDK) -mmacosx-version-min=10.4 -g -DDEBUG -c $< -o $(DEBUG_DIR)/Base_Neko.o $(LIB_INCLUDES)
 	$(NEKO_AR) rcs $@ $(DEBUG_DIR)/Base_Neko.o
@@ -103,17 +103,17 @@ $(RELEASE_DIR)/libXP_Neko.a: $(XP_DIR)/XPObject.m
 	$(NEKO_CC) $(MAC_NEKO_ARCHS) -isysroot $(MAC_NEKO_SDK) -mmacosx-version-min=10.4 -O3 -c $< -o $(RELEASE_DIR)/XP_Neko.o $(LIB_INCLUDES)
 	$(NEKO_AR) rcs $@ $(RELEASE_DIR)/XP_Neko.o
 
-$(RELEASE_DIR)/libBase_iOS.a: $(BASE_DIR)/TDLObject.m
+$(RELEASE_DIR)/libBase_iOS.a: $(BASE_DIR)/TDLObject.m $(RELEASE_DIR)/libXP_iOS.a
 	@mkdir -p $(RELEASE_DIR)
 	$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=3.1 $(ARC_FLAGS) -O3 -c $< -o $(RELEASE_DIR)/Base_iOS.o $(LIB_INCLUDES)
 	$(AR) rcs $@ $(RELEASE_DIR)/Base_iOS.o
 
-$(RELEASE_DIR)/libBase_Mac.a: $(BASE_DIR)/TDLObject.m
+$(RELEASE_DIR)/libBase_Mac.a: $(BASE_DIR)/TDLObject.m $(RELEASE_DIR)/libXP_Mac.a
 	@mkdir -p $(RELEASE_DIR)
 	$(CC) $(MAC_MODERN_ARCHS) -isysroot $(MAC_MODERN_SDK) -mmacosx-version-min=10.7 $(ARC_FLAGS) -O3 -c $< -o $(RELEASE_DIR)/Base_Mac.o $(LIB_INCLUDES)
 	$(AR) rcs $@ $(RELEASE_DIR)/Base_Mac.o
 
-$(RELEASE_DIR)/libBase_Neko.a: $(BASE_DIR)/TDLObject.m
+$(RELEASE_DIR)/libBase_Neko.a: $(BASE_DIR)/TDLObject.m $(RELEASE_DIR)/libXP_Neko.a
 	@mkdir -p $(RELEASE_DIR)
 	$(NEKO_CC) $(MAC_NEKO_ARCHS) -isysroot $(MAC_NEKO_SDK) -mmacosx-version-min=10.4 -O3 -c $< -o $(RELEASE_DIR)/Base_Neko.o $(LIB_INCLUDES)
 	$(NEKO_AR) rcs $@ $(RELEASE_DIR)/Base_Neko.o
