@@ -1,5 +1,5 @@
 #import <UIKit/UIKit.h>
-#import "GTMiOSAppDelegate.h"
+#import "AppDelegate.h"
 
 /**
  * The main entry point for TheDL iOS application.
@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
   
   NSLog(@"[main] Initializing UIApplication...");
   
-  int retVal = UIApplicationMain(argc, argv, nil, @"GTMiOSAppDelegate");
+  int retVal = UIApplicationMain(argc, argv, nil, @"AppDelegate");
   
   [pool drain];
   return retVal;

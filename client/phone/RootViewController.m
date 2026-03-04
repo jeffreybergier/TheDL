@@ -1,5 +1,5 @@
 #import "RootViewController.h"
-#import "TDLDownloadTableViewController.h"
+#import "DownloadsTableViewController.h"
 
 @implementation RootViewController
 
@@ -9,17 +9,22 @@
   [self setTitle:@"The"];
   
   UIViewController *downViewController = [[UIViewController alloc] init];
-  [downViewController setTitle:@"Down"];
+  [downViewController setTitle:@"TheDL"];
   [[downViewController view] setBackgroundColor:[UIColor whiteColor]];
-  [[downViewController tabBarItem] setTitle:@"Down"];
   
-  TDLDownloadTableViewController *loadViewController = [[TDLDownloadTableViewController alloc] init];
-  [[loadViewController tabBarItem] setTitle:@"Load"];
+  UINavigationController *downNav = [[UINavigationController alloc] initWithRootViewController:downViewController];
+  [[downNav tabBarItem] setTitle:@"Down"];
   
-  [self setViewControllers:[NSArray arrayWithObjects:downViewController, loadViewController, nil]];
+  DownloadsTableViewController *loadViewController = [[DownloadsTableViewController alloc] init];
+  UINavigationController *loadNav = [[UINavigationController alloc] initWithRootViewController:loadViewController];
+  [[loadNav tabBarItem] setTitle:@"Load"];
+  
+  [self setViewControllers:[NSArray arrayWithObjects:downNav, loadNav, nil]];
   
   [downViewController release];
+  [downNav release];
   [loadViewController release];
+  [loadNav release];
 }
 
 @end

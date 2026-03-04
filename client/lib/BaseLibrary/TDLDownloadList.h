@@ -12,4 +12,9 @@
  */
 + (NSArray *)allDownloads;
 
+/**
+ * Debug helper to create fake download PLISTs in the Documents directory.
+ */
++ (void)__DEBUG_createFakeData;
+
 @end

@@ -1,37 +1,61 @@
 #import <Foundation/Foundation.h>
 
-#if !TARGET_OS_IPHONE
-#import <AppKit/AppKit.h>
-#endif
-
 /**
- * A file wrapper subclass for storing download payloads and metadata.
+ * A data class representing a download item.
+ * Compatible with iOS 3.1 and Mac OS X 10.4.
  */
-@interface TDLDownload : NSFileWrapper {
+@interface TDLDownload : NSObject {
  @private
-  NSString *_filename;
+  NSString *_displayName;
+  NSString *_filePath;
   NSString *_contentType;
+  NSString *_requestURL;
+  NSString *_responseURL;
+  long long _actualSize;
+  long long _contentSize;
 }
 
 /**
- * Initializes a new download wrapper with data and metadata.
+ * Initializes a download object from a PLIST dictionary.
  *
- * @param data The blob of data to store.
- * @param filename The original filename of the download.
- * @param contentType The MIME content-type of the download.
+ * @param dict The dictionary containing download properties.
  * @return An initialized TDLDownload instance.
  */
-- (id)initWithData:(NSData *)data 
-          filename:(NSString *)filename 
-       contentType:(NSString *)contentType;
+- (id)initWithDictionary:(NSDictionary *)dict;
 
-/** Returns the stored filename. */
-- (NSString *)filename;
+/**
+ * Returns a dictionary representation suitable for saving to a PLIST.
+ *
+ * @return An NSDictionary containing the object's properties.
+ */
+- (NSDictionary *)dictionaryRepresentation;
 
-/** Returns the stored content-type. */
+/** Returns the display name. */
+- (NSString *)displayName;
+- (void)setDisplayName:(NSString *)name;
+
+/** Returns the local file path. */
+- (NSString *)filePath;
+- (void)setFilePath:(NSString *)path;
+
+/** Returns the content type (MIME). */
 - (NSString *)contentType;
+- (void)setContentType:(NSString *)type;
 
-/** Returns the stored data blob. */
-- (NSData *)regularFileContents;
+/** Returns the original request URL string. */
+- (NSString *)requestURL;
+- (void)setRequestURL:(NSString *)url;
+
+/** Returns the final response URL string. */
+- (NSString *)responseURL;
+- (void)setResponseURL:(NSString *)url;
+
+/** Returns the actual size downloaded so far. */
+- (long long)actualSize;
+- (void)setActualSize:(long long)size;
+
+/** Returns the expected total content size. */
+- (long long)contentSize;
+- (void)setContentSize:(long long)size;
 
 @end

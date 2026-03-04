@@ -1,6 +1,6 @@
-#import "GTMAppDelegate.h"
+#import "AppDelegate.h"
 
-@implementation GTMAppDelegate
+@implementation AppDelegate
 
 - (NSWindow *)window {
   return _window;
@@ -14,7 +14,7 @@
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-  NSLog(@"[GTMAppDelegate applicationDidFinishLaunching:] Started TheDL on macOS.");
+  NSLog(@"[AppDelegate applicationDidFinishLaunching:] Started TheDL on macOS.");
 
   NSRect frame = NSMakeRect(0, 0, 480, 320);
   unsigned int styleMask = NSTitledWindowMask | NSClosableWindowMask |
@@ -24,7 +24,7 @@
                                        styleMask:styleMask
                                          backing:NSBackingStoreBuffered
                                            defer:NO];
-  [_window setTitle:@"The"];
+  [_window setTitle:@"TheDL"];
   [_window center];
   [_window makeKeyAndOrderFront:nil];
 }

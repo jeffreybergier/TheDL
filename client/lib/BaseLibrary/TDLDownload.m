@@ -1,82 +1,105 @@
 #import "TDLDownload.h"
 
-static NSString *const kMetadataFileName = @"metadata.plist";
-static NSString *const kDataFileName = @"data";
-static NSString *const kFilenameKey = @"filename";
+static NSString *const kDisplayNameKey = @"displayName";
+static NSString *const kFilePathKey = @"filePath";
 static NSString *const kContentTypeKey = @"contentType";
+static NSString *const kRequestURLKey = @"requestURL";
+static NSString *const kResponseURLKey = @"responseURL";
+static NSString *const kActualSizeKey = @"actualSize";
+static NSString *const kContentSizeKey = @"contentSize";
 
 @implementation TDLDownload
 
-- (id)initWithData:(NSData *)data 
-          filename:(NSString *)filename 
-       contentType:(NSString *)contentType {
-  self = [super initDirectoryWithFileWrappers:nil];
+- (id)init {
+  self = [super init];
   if (self) {
-    _filename = [filename copy];
-    _contentType = [contentType copy];
-    
-    // Create data wrapper
-    NSFileWrapper *dataWrapper = [[NSFileWrapper alloc] initRegularFileWithContents:data];
-    [dataWrapper setPreferredFilename:kDataFileName];
-    [self addFileWrapper:dataWrapper];
-    [dataWrapper release];
-    
-    // Create metadata wrapper
-    NSDictionary *metadata = [NSDictionary dictionaryWithObjectsAndKeys:
-                              _filename, kFilenameKey,
-                              _contentType, kContentTypeKey, nil];
-    NSData *plistData = [NSPropertyListSerialization dataFromPropertyList:metadata
-                                                                   format:NSPropertyListBinaryFormat_v1_0
-                                                         errorDescription:nil];
-    NSFileWrapper *metadataWrapper = [[NSFileWrapper alloc] initRegularFileWithContents:plistData];
-    [metadataWrapper setPreferredFilename:kMetadataFileName];
-    [self addFileWrapper:metadataWrapper];
-    [metadataWrapper release];
+    _actualSize = 0;
+    _contentSize = 0;
   }
   return self;
 }
 
-// Using NSUInteger instead of NSFileWrapperReadingOptions for 10.4 compatibility
-- (id)initWithURL:(NSURL *)url options:(NSUInteger)options error:(NSError **)outError {
-#if !TARGET_OS_IPHONE && (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 1060)
-  // Fallback for 10.4/10.5
-  self = [super initWithPath:[url path]];
-#else
-  self = [super initWithURL:url options:options error:outError];
-#endif
+- (id)initWithDictionary:(NSDictionary *)dict {
+  self = [self init];
   if (self) {
-    NSDictionary *wrappers = [self fileWrappers];
-    NSFileWrapper *metadataWrapper = [wrappers objectForKey:kMetadataFileName];
-    if (metadataWrapper) {
-      NSData *plistData = [metadataWrapper regularFileContents];
-      NSDictionary *metadata = [NSPropertyListSerialization propertyListFromData:plistData
-                                                                mutabilityOption:NSPropertyListImmutable
-                                                                          format:nil
-                                                                errorDescription:nil];
-      _filename = [[metadata objectForKey:kFilenameKey] copy];
-      _contentType = [[metadata objectForKey:kContentTypeKey] copy];
-    }
+    _displayName = [[dict objectForKey:kDisplayNameKey] copy];
+    _filePath = [[dict objectForKey:kFilePathKey] copy];
+    _contentType = [[dict objectForKey:kContentTypeKey] copy];
+    _requestURL = [[dict objectForKey:kRequestURLKey] copy];
+    _responseURL = [[dict objectForKey:kResponseURLKey] copy];
+    _actualSize = [[dict objectForKey:kActualSizeKey] longLongValue];
+    _contentSize = [[dict objectForKey:kContentSizeKey] longLongValue];
   }
   return self;
+}
+
+- (NSDictionary *)dictionaryRepresentation {
+  NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+  if (_displayName) [dict setObject:_displayName forKey:kDisplayNameKey];
+  if (_filePath) [dict setObject:_filePath forKey:kFilePathKey];
+  if (_contentType) [dict setObject:_contentType forKey:kContentTypeKey];
+  if (_requestURL) [dict setObject:_requestURL forKey:kRequestURLKey];
+  if (_responseURL) [dict setObject:_responseURL forKey:kResponseURLKey];
+  [dict setObject:[NSNumber numberWithLongLong:_actualSize] forKey:kActualSizeKey];
+  [dict setObject:[NSNumber numberWithLongLong:_contentSize] forKey:kContentSizeKey];
+  return dict;
 }
 
 - (void)dealloc {
-  [_filename release];
+  [_displayName release];
+  [_filePath release];
   [_contentType release];
+  [_requestURL release];
+  [_responseURL release];
   [super dealloc];
 }
 
-- (NSString *)filename {
-  return _filename;
+#pragma mark - Accessors
+
+- (NSString *)displayName { return _displayName; }
+- (void)setDisplayName:(NSString *)name {
+  if (_displayName != name) {
+    [_displayName release];
+    _displayName = [name copy];
+  }
 }
 
-- (NSString *)contentType {
-  return _contentType;
+- (NSString *)filePath { return _filePath; }
+- (void)setFilePath:(NSString *)path {
+  if (_filePath != path) {
+    [_filePath release];
+    _filePath = [path copy];
+  }
 }
 
-- (NSData *)regularFileContents {
-  NSFileWrapper *dataWrapper = [[self fileWrappers] objectForKey:kDataFileName];
-  return [dataWrapper regularFileContents];
+- (NSString *)contentType { return _contentType; }
+- (void)setContentType:(NSString *)type {
+  if (_contentType != type) {
+    [_contentType release];
+    _contentType = [type copy];
+  }
 }
+
+- (NSString *)requestURL { return _requestURL; }
+- (void)setRequestURL:(NSString *)url {
+  if (_requestURL != url) {
+    [_requestURL release];
+    _requestURL = [url copy];
+  }
+}
+
+- (NSString *)responseURL { return _responseURL; }
+- (void)setResponseURL:(NSString *)url {
+  if (_responseURL != url) {
+    [_responseURL release];
+    _responseURL = [url copy];
+  }
+}
+
+- (long long)actualSize { return _actualSize; }
+- (void)setActualSize:(long long)size { _actualSize = size; }
+
+- (long long)contentSize { return _contentSize; }
+- (void)setContentSize:(long long)size { _contentSize = size; }
 
 @end

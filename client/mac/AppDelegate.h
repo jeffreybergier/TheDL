@@ -4,9 +4,9 @@
  * The primary application delegate for TheDL on macOS.
  */
 #if defined(__MAC_10_6)
-@interface GTMAppDelegate : NSObject <NSApplicationDelegate> {
+@interface AppDelegate : NSObject <NSApplicationDelegate> {
 #else
-@interface GTMAppDelegate : NSObject {
+@interface AppDelegate : NSObject {
 #endif
  @private
   NSWindow *_window;

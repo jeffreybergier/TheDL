@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "GTMAppDelegate.h"
+#import "AppDelegate.h"
 
 /**
  * The main entry point for TheDL macOS application.
@@ -10,7 +10,7 @@ int main(int argc, const char *argv[]) {
   NSLog(@"[main] Initializing NSApplication...");
   
   NSApplication *app = [NSApplication sharedApplication];
-  GTMAppDelegate *delegate = [[GTMAppDelegate alloc] init];
+  AppDelegate *delegate = [[AppDelegate alloc] init];
   [app setDelegate:delegate];
   
   [app run];

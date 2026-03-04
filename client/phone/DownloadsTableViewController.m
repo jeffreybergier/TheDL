@@ -1,8 +1,8 @@
-#import "TDLDownloadTableViewController.h"
+#import "DownloadsTableViewController.h"
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
 
-@implementation TDLDownloadTableViewController
+@implementation DownloadsTableViewController
 
 - (id)init {
   self = [super initWithStyle:UITableViewStylePlain];
@@ -22,6 +22,16 @@
                                     action:@selector(refreshDownloads)];
   [[self navigationItem] setRightBarButtonItem:refreshButton];
   [refreshButton release];
+
+#ifdef DEBUG
+  UIBarButtonItem *debugButton = [[UIBarButtonItem alloc]
+                                  initWithTitle:@"Debug"
+                                  style:UIBarButtonItemStyleBordered
+                                  target:self
+                                  action:@selector(createDebugData)];
+  [[self navigationItem] setLeftBarButtonItem:debugButton];
+  [debugButton release];
+#endif
   
   [self refreshDownloads];
 }
@@ -32,9 +42,16 @@
 }
 
 - (void)refreshDownloads {
+  NSLog(@"[DownloadsTableViewController refreshDownloads] Refreshing list...");
   [_downloads release];
   _downloads = [[TDLDownloadList allDownloads] retain];
   [[self tableView] reloadData];
+}
+
+- (void)createDebugData {
+  NSLog(@"[DownloadsTableViewController createDebugData] Creating fake data...");
+  [TDLDownloadList __DEBUG_createFakeData];
+  [self refreshDownloads];
 }
 
 #pragma mark - Table view data source
@@ -56,7 +73,7 @@
   }
   
   TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
-  [[cell textLabel] setText:[download filename]];
+  [[cell textLabel] setText:[download displayName]];
   [[cell detailTextLabel] setText:[download contentType]];
   
   return cell;

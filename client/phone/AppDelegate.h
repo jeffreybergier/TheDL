@@ -5,10 +5,9 @@
 /**
  * The primary application delegate for TheDL on iOS.
  */
-@interface GTMiOSAppDelegate : NSObject <UIApplicationDelegate> {
+@interface AppDelegate : NSObject <UIApplicationDelegate> {
  @private
   UIWindow *_window;
-  UINavigationController *_navigationController;
   RootViewController *_rootViewController;
 }
 
