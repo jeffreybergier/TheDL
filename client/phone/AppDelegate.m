@@ -16,16 +16,24 @@
 
 - (BOOL)application:(UIApplication *)application 
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-  NSLog(@"[AppDelegate application:didFinishLaunchingWithOptions:] Started TheDL on iOS.");
+  NSLog(@"[AppDelegate application:didFinishLaunchingWithOptions:] Start");
   
   _window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
   [_window setBackgroundColor:[UIColor whiteColor]];
   
   _rootViewController = [[RootViewController alloc] init];
+  NSLog(@"[AppDelegate application:didFinishLaunchingWithOptions:] RootViewController created");
   
-  [_window addSubview:[_rootViewController view]];
+  // setRootViewController: is iOS 4.0+, use addSubview: for 3.1 compatibility
+  if ([_window respondsToSelector:@selector(setRootViewController:)]) {
+    [_window setRootViewController:_rootViewController];
+  } else {
+    [_window addSubview:[_rootViewController view]];
+  }
+  
   [_window makeKeyAndVisible];
   
+  NSLog(@"[AppDelegate application:didFinishLaunchingWithOptions:] Finished");
   return YES;
 }
 

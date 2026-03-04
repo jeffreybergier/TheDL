@@ -1,8 +1,8 @@
-#import "DownloadsTableViewController.h"
+#import "TDLDownloadTableViewController.h"
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
 
-@implementation DownloadsTableViewController
+@implementation TDLDownloadTableViewController
 
 - (id)init {
   self = [super initWithStyle:UITableViewStylePlain];
@@ -15,6 +15,7 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
+  NSLog(@"[TDLDownloadTableViewController viewDidLoad]");
   
   UIBarButtonItem *refreshButton = [[UIBarButtonItem alloc] 
                                     initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh 
@@ -22,16 +23,6 @@
                                     action:@selector(refreshDownloads)];
   [[self navigationItem] setRightBarButtonItem:refreshButton];
   [refreshButton release];
-
-#ifdef DEBUG
-  UIBarButtonItem *debugButton = [[UIBarButtonItem alloc]
-                                  initWithTitle:@"Debug"
-                                  style:UIBarButtonItemStyleBordered
-                                  target:self
-                                  action:@selector(createDebugData)];
-  [[self navigationItem] setLeftBarButtonItem:debugButton];
-  [debugButton release];
-#endif
   
   [self refreshDownloads];
 }
@@ -42,16 +33,11 @@
 }
 
 - (void)refreshDownloads {
-  NSLog(@"[DownloadsTableViewController refreshDownloads] Refreshing list...");
+  NSLog(@"[TDLDownloadTableViewController refreshDownloads] Start");
   [_downloads release];
   _downloads = [[TDLDownloadList allDownloads] retain];
+  NSLog(@"[TDLDownloadTableViewController refreshDownloads] Loaded %lu downloads", (unsigned long)[_downloads count]);
   [[self tableView] reloadData];
-}
-
-- (void)createDebugData {
-  NSLog(@"[DownloadsTableViewController createDebugData] Creating fake data...");
-  [TDLDownloadList __DEBUG_createFakeData];
-  [self refreshDownloads];
 }
 
 #pragma mark - Table view data source

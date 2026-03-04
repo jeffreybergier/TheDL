@@ -1,5 +1,6 @@
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
+#include <TargetConditionals.h>
 
 @implementation TDLDownloadList
 
@@ -17,10 +18,10 @@
   }
   
   NSArray *files = nil;
-  // contentsOfDirectoryAtPath:error: is 10.5+ and iOS 2.0+
-  // Since we target 10.4, we should use directoryContentsAtPath: for the Neko build
-#if !TARGET_OS_IPHONE && (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 1050)
-  files = [fileManager directoryContentsAtPath:downloadsPath];
+#if !TARGET_OS_IPHONE && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+  if ([fileManager respondsToSelector:@selector(directoryContentsAtPath:)]) {
+    files = [fileManager performSelector:@selector(directoryContentsAtPath:) withObject:downloadsPath];
+  }
 #else
   files = [fileManager contentsOfDirectoryAtPath:downloadsPath error:nil];
 #endif
@@ -51,7 +52,15 @@
   NSString *downloadsPath = [documentsDirectory stringByAppendingPathComponent:@"Downloads"];
   
   NSFileManager *fileManager = [NSFileManager defaultManager];
+#if !TARGET_OS_IPHONE && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+  if ([fileManager respondsToSelector:@selector(createDirectoryAtPath:attributes:)]) {
+    [fileManager performSelector:@selector(createDirectoryAtPath:attributes:) 
+                      withObject:downloadsPath 
+                      withObject:nil];
+  }
+#else
   [fileManager createDirectoryAtPath:downloadsPath withIntermediateDirectories:YES attributes:nil error:nil];
+#endif
   
   NSArray *fakeNames = [NSArray arrayWithObjects:@"Debian DVD", @"Tiger.dmg", @"Music.mp3", nil];
   unsigned int i;

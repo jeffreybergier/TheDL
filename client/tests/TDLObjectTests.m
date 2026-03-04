@@ -1,11 +1,5 @@
-#import <XCTest/XCTest.h>
+#import "TDLObjectTests.h"
 #import "TDLObject.h"
-
-/**
- * Unit tests for TDLObject in the BaseLibrary.
- */
-@interface TDLObjectTests : XCTestCase
-@end
 
 @implementation TDLObjectTests
 

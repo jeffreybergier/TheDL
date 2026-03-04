@@ -1,7 +1,8 @@
 #import <XCTest/XCTest.h>
 #import <UIKit/UIKit.h>
-#import "TDLObjectTests.m"
-#import "TDLDownloadTests.m"
+#import "TDLObjectTests.h"
+#import "TDLDownloadTests.h"
+#import "TDLURLConnectionServiceTests.h"
 
 /**
  * A simple main entry point to run XCTest cases from the command line on iOS Simulator.

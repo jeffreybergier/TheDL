@@ -6,7 +6,7 @@
 @interface TDLDownloadList : NSObject
 
 /**
- * Loads and returns all TDLDownload objects found in the Documents directory.
+ * Loads and returns all TDLDownload objects found in the Documents/Downloads directory.
  *
  * @return An NSArray of TDLDownload objects.
  */

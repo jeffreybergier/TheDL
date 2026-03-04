@@ -1,29 +1,28 @@
 #import "RootViewController.h"
-#import "DownloadsTableViewController.h"
+#import "TDLDownloadTableViewController.h"
+#import "TDLServiceListViewController.h"
 
 @implementation RootViewController
 
 - (void)viewDidLoad {
   [super viewDidLoad];
+  NSLog(@"[RootViewController viewDidLoad] Initializing tabs...");
   
   [self setTitle:@"The"];
   
-  UIViewController *downViewController = [[UIViewController alloc] init];
-  [downViewController setTitle:@"TheDL"];
-  [[downViewController view] setBackgroundColor:[UIColor whiteColor]];
-  
-  UINavigationController *downNav = [[UINavigationController alloc] initWithRootViewController:downViewController];
+  TDLServiceListViewController *serviceListVC = [[TDLServiceListViewController alloc] init];
+  UINavigationController *downNav = [[UINavigationController alloc] initWithRootViewController:serviceListVC];
   [[downNav tabBarItem] setTitle:@"Down"];
   
-  DownloadsTableViewController *loadViewController = [[DownloadsTableViewController alloc] init];
-  UINavigationController *loadNav = [[UINavigationController alloc] initWithRootViewController:loadViewController];
+  TDLDownloadTableViewController *downloadListVC = [[TDLDownloadTableViewController alloc] init];
+  UINavigationController *loadNav = [[UINavigationController alloc] initWithRootViewController:downloadListVC];
   [[loadNav tabBarItem] setTitle:@"Load"];
   
   [self setViewControllers:[NSArray arrayWithObjects:downNav, loadNav, nil]];
   
-  [downViewController release];
+  [serviceListVC release];
   [downNav release];
-  [loadViewController release];
+  [downloadListVC release];
   [loadNav release];
 }
 
