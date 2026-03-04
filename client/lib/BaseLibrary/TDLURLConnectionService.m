@@ -94,9 +94,15 @@
     NSFileManager *fm = [NSFileManager defaultManager];
 #if !TARGET_OS_IPHONE && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 1050
     if ([fm respondsToSelector:@selector(createDirectoryAtPath:attributes:)]) {
-      [fm performSelector:@selector(createDirectoryAtPath:attributes:) 
-               withObject:downloadsDir 
-               withObject:nil];
+      SEL sel = @selector(createDirectoryAtPath:attributes:);
+      NSMethodSignature *sig = [fm methodSignatureForSelector:sel];
+      NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+      [inv setTarget:fm];
+      [inv setSelector:sel];
+      [inv setArgument:&downloadsDir atIndex:2];
+      id attrs = nil;
+      [inv setArgument:&attrs atIndex:3];
+      [inv invoke];
     }
 #else
     [fm createDirectoryAtPath:downloadsDir withIntermediateDirectories:YES attributes:nil error:nil];

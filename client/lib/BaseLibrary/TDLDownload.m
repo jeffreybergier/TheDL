@@ -33,6 +33,15 @@ static NSString *const kContentSizeKey = @"contentSize";
   return self;
 }
 
+- (id)initWithURL:(NSURL *)url options:(unsigned int)options error:(NSError **)outError {
+  NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:[url path]];
+  if (!dict) {
+    [self release];
+    return nil;
+  }
+  return [self initWithDictionary:dict];
+}
+
 - (NSDictionary *)dictionaryRepresentation {
   NSMutableDictionary *dict = [NSMutableDictionary dictionary];
   if (_displayName) [dict setObject:_displayName forKey:kDisplayNameKey];

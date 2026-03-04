@@ -5,6 +5,7 @@
 @implementation TDLDownloadList
 
 + (NSArray *)allDownloads {
+  NSLog(@"[TDLDownloadList allDownloads] Start");
   NSMutableArray *downloads = [NSMutableArray array];
   
   NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
@@ -18,13 +19,8 @@
   }
   
   NSArray *files = nil;
-#if !TARGET_OS_IPHONE && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-  if ([fileManager respondsToSelector:@selector(directoryContentsAtPath:)]) {
-    files = [fileManager performSelector:@selector(directoryContentsAtPath:) withObject:downloadsPath];
-  }
-#else
+  // contentsOfDirectoryAtPath is iOS 2.0+
   files = [fileManager contentsOfDirectoryAtPath:downloadsPath error:nil];
-#endif
   
   if (files) {
     unsigned int count = [files count];
@@ -33,9 +29,8 @@
       NSString *file = [files objectAtIndex:i];
       if ([[file pathExtension] isEqualToString:@"plist"]) {
         NSString *fullPath = [downloadsPath stringByAppendingPathComponent:file];
-        NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:fullPath];
-        if (dict) {
-          TDLDownload *download = [[TDLDownload alloc] initWithDictionary:dict];
+        TDLDownload *download = [[TDLDownload alloc] initWithURL:[NSURL fileURLWithPath:fullPath] options:0 error:nil];
+        if (download) {
           [downloads addObject:download];
           [download release];
         }
@@ -52,31 +47,23 @@
   NSString *downloadsPath = [documentsDirectory stringByAppendingPathComponent:@"Downloads"];
   
   NSFileManager *fileManager = [NSFileManager defaultManager];
-#if !TARGET_OS_IPHONE && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-  if ([fileManager respondsToSelector:@selector(createDirectoryAtPath:attributes:)]) {
-    [fileManager performSelector:@selector(createDirectoryAtPath:attributes:) 
-                      withObject:downloadsPath 
-                      withObject:nil];
-  }
-#else
   [fileManager createDirectoryAtPath:downloadsPath withIntermediateDirectories:YES attributes:nil error:nil];
-#endif
   
   NSArray *fakeNames = [NSArray arrayWithObjects:@"Debian DVD", @"Tiger.dmg", @"Music.mp3", nil];
   unsigned int i;
   for (i = 0; i < [fakeNames count]; i++) {
     NSString *name = [fakeNames objectAtIndex:i];
-    NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:
-                          name, @"displayName",
-                          @"/tmp/fake", @"filePath",
-                          @"application/octet-stream", @"contentType",
-                          @"http://example.com/fake", @"requestURL",
-                          [NSNumber numberWithLongLong:1024 * (i + 1)], @"actualSize",
-                          [NSNumber numberWithLongLong:2048 * (i + 1)], @"contentSize", nil];
+    TDLDownload *download = [[TDLDownload alloc] init];
+    [download setDisplayName:name];
+    [download setFilePath:@"/tmp/fake"];
+    [download setContentType:@"application/octet-stream"];
+    [download setActualSize:1024 * (i + 1)];
+    [download setContentSize:2048 * (i + 1)];
     
     NSString *plistName = [NSString stringWithFormat:@"debug_%d.plist", i];
     NSString *fullPath = [downloadsPath stringByAppendingPathComponent:plistName];
-    [dict writeToFile:fullPath atomically:YES];
+    [[download dictionaryRepresentation] writeToFile:fullPath atomically:YES];
+    [download release];
   }
 }
 

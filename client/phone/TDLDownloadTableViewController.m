@@ -21,9 +21,24 @@
                                     initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh 
                                     target:self 
                                     action:@selector(refreshDownloads)];
-  [[self navigationItem] setRightBarButtonItem:refreshButton];
-  [refreshButton release];
   
+  UIBarButtonItem *debugButton = [[UIBarButtonItem alloc] 
+                                   initWithBarButtonSystemItem:UIBarButtonSystemItemAdd 
+                                   target:self 
+                                   action:@selector(createDebugData)];
+  
+  [[self navigationItem] setRightBarButtonItem:refreshButton];
+  [[self navigationItem] setLeftBarButtonItem:debugButton];
+  
+  [refreshButton release];
+  [debugButton release];
+  
+  [self refreshDownloads];
+}
+
+- (void)createDebugData {
+  NSLog(@"[TDLDownloadTableViewController createDebugData] Creating fake data...");
+  [TDLDownloadList __DEBUG_createFakeData];
   [self refreshDownloads];
 }
 

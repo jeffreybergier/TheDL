@@ -24,6 +24,16 @@
 - (id)initWithDictionary:(NSDictionary *)dict;
 
 /**
+ * Initializes a download object from a URL pointing to a PLIST on disk.
+ *
+ * @param url The URL of the PLIST file.
+ * @param options Options (not currently used).
+ * @param outError Error output.
+ * @return An initialized TDLDownload instance.
+ */
+- (id)initWithURL:(NSURL *)url options:(unsigned int)options error:(NSError **)outError;
+
+/**
  * Returns a dictionary representation suitable for saving to a PLIST.
  *
  * @return An NSDictionary containing the object's properties.
