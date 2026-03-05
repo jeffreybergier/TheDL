@@ -33,11 +33,31 @@
   [_urlField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
   [_urlField setAutocorrectionType:UITextAutocorrectionTypeNo];
   
-  _refreshTimer = [[NSTimer scheduledTimerWithTimeInterval:1.0 
-                                                   target:self 
-                                                 selector:@selector(refreshAction) 
-                                                 userInfo:nil 
-                                                  repeats:YES] retain];
+  UIBarButtonItem *refreshButton = [[UIBarButtonItem alloc] 
+                                    initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh 
+                                    target:self 
+                                    action:@selector(refreshAction)];
+  
+  UIBarButtonItem *debugButton = [[UIBarButtonItem alloc] 
+                                   initWithBarButtonSystemItem:UIBarButtonSystemItemAdd 
+                                   target:self 
+                                   action:@selector(triggerDebugDownload)];
+  
+  [[self navigationItem] setRightBarButtonItem:refreshButton];
+  [[self navigationItem] setLeftBarButtonItem:debugButton];
+  
+  [refreshButton release];
+  [debugButton release];
+}
+
+- (void)triggerDebugDownload {
+  NSLog(@"[TDLURLConnectionServiceTableViewController triggerDebugDownload] Starting debug fetch for Google logo...");
+  
+  NSString *urlStr = @"https://www.google.com/images/branding/googlelogo/1x/googlelogo_white_background_color_272x92dp.png";
+  NSURL *url = [NSURL URLWithString:urlStr];
+  if (url) {
+    [_service fetchURL:url];
+  }
 }
 
 - (void)refreshAction {
