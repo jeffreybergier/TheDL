@@ -50,7 +50,7 @@
 - (void)refreshDownloads {
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Start");
   [_downloads release];
-  _downloads = [[TDLDownloadList allDownloads] retain];
+  _downloads = [[[TDLDownloadList sharedList] allDownloads] retain];
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Loaded %lu downloads", (unsigned long)[_downloads count]);
   [[self tableView] reloadData];
 }
@@ -75,7 +75,15 @@
   
   TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
   [[cell textLabel] setText:[download displayName]];
-  [[cell detailTextLabel] setText:[download contentType]];
+  
+  NSString *status = @"Unknown";
+  switch ([download state]) {
+    case TDLDownloadStatePending: status = @"Pending"; break;
+    case TDLDownloadStateDownloading: status = @"Downloading..."; break;
+    case TDLDownloadStateFinished: status = @"Finished"; break;
+    case TDLDownloadStateFailed: status = @"Failed"; break;
+  }
+  [[cell detailTextLabel] setText:status];
   
   return cell;
 }

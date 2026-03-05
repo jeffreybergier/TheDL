@@ -1,6 +1,6 @@
 #import "TDLURLConnectionServiceTableViewController.h"
 #import "TDLURLConnectionService.h"
-#import "TDLDownloadTask.h"
+#import "TDLDownload.h"
 
 @implementation TDLURLConnectionServiceTableViewController
 
@@ -17,8 +17,6 @@
   [_service release];
   [_urlField setDelegate:nil];
   [_urlField release];
-  [_refreshTimer invalidate];
-  [_refreshTimer release];
   [super dealloc];
 }
 
@@ -33,20 +31,11 @@
   [_urlField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
   [_urlField setAutocorrectionType:UITextAutocorrectionTypeNo];
   
-  UIBarButtonItem *refreshButton = [[UIBarButtonItem alloc] 
-                                    initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh 
-                                    target:self 
-                                    action:@selector(refreshAction)];
-  
   UIBarButtonItem *debugButton = [[UIBarButtonItem alloc] 
                                    initWithBarButtonSystemItem:UIBarButtonSystemItemAdd 
                                    target:self 
                                    action:@selector(triggerDebugDownload)];
-  
-  [[self navigationItem] setRightBarButtonItem:refreshButton];
-  [[self navigationItem] setLeftBarButtonItem:debugButton];
-  
-  [refreshButton release];
+  [[self navigationItem] setRightBarButtonItem:debugButton];
   [debugButton release];
 }
 
@@ -58,10 +47,6 @@
   if (url) {
     [_service fetchURL:url];
   }
-}
-
-- (void)refreshAction {
-  [[self tableView] reloadData];
 }
 
 - (void)fetchAction {
@@ -86,68 +71,31 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-  return 2;
+  return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-  if (section == 0) {
-    return 1;
-  }
-  return [[_service activeTasks] count];
+  return 1;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-  if (section == 0) {
-    return @"Add Download";
-  }
-  return @"In Progress";
+  return @"Add Download";
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-  if ([indexPath section] == 0) {
-    static NSString *InputCellID = @"InputCell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:InputCellID];
-    if (cell == nil) {
-      cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault 
-                                     reuseIdentifier:InputCellID] autorelease];
-      [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-    }
-    
-    // Ensure _urlField is in the current cell (handle reuse)
-    if ([_urlField superview] != [cell contentView]) {
-      [_urlField removeFromSuperview];
-      [[cell contentView] addSubview:_urlField];
-    }
-    return cell;
-  }
-  
-  static NSString *TaskCellID = @"TaskCell";
-  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:TaskCellID];
+  static NSString *InputCellID = @"InputCell";
+  UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:InputCellID];
   if (cell == nil) {
-    cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle 
-                                   reuseIdentifier:TaskCellID] autorelease];
+    cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault 
+                                   reuseIdentifier:InputCellID] autorelease];
+    [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
   }
   
-  NSArray *tasks = [_service activeTasks];
-  TDLDownloadTask *task = [tasks objectAtIndex:([tasks count] - 1 - [indexPath row])];
-  
-  [[cell textLabel] setText:[[task url] absoluteString]];
-  
-  NSString *status = @"Unknown";
-  switch ([task state]) {
-    case TDLDownloadTaskStateRunning:
-      status = [NSString stringWithFormat:@"Downloading (%lu bytes)...", 
-                (unsigned long)[[task accumulatedData] length]];
-      break;
-    case TDLDownloadTaskStateFinished:
-      status = @"Finished";
-      break;
-    case TDLDownloadTaskStateFailed:
-      status = [NSString stringWithFormat:@"Failed: %@", [task errorMessage]];
-      break;
+  // Ensure _urlField is in the current cell (handle reuse)
+  if ([_urlField superview] != [cell contentView]) {
+    [_urlField removeFromSuperview];
+    [[cell contentView] addSubview:_urlField];
   }
-  [[cell detailTextLabel] setText:status];
-  
   return cell;
 }
 

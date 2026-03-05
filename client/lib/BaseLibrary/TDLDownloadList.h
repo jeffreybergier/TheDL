@@ -1,19 +1,42 @@
 #import <Foundation/Foundation.h>
 
-/**
- * A utility class for managing the list of downloads.
- */
-@interface TDLDownloadList : NSObject
+@class TDLDownload;
 
 /**
- * Loads and returns all TDLDownload objects found in the Documents/Downloads directory.
+ * A central manager for all downloads (in-progress and completed).
+ */
+@interface TDLDownloadList : NSObject {
+ @private
+  NSMutableDictionary *_downloadCache; // udid -> TDLDownload
+}
+
+/** Returns the shared singleton instance. */
++ (TDLDownloadList *)sharedList;
+
+/**
+ * Returns all downloads managed by the list.
  *
  * @return An NSArray of TDLDownload objects.
  */
-+ (NSArray *)allDownloads;
+- (NSArray *)allDownloads;
 
 /**
- * Debug helper to create fake download PLISTs in the Documents directory.
+ * Returns a download by its UDID.
+ */
+- (TDLDownload *)downloadWithUdid:(NSString *)udid;
+
+/**
+ * Creates and registers a new download object.
+ */
+- (TDLDownload *)createDownload;
+
+/**
+ * Persists a download object's metadata to disk.
+ */
+- (void)saveDownload:(TDLDownload *)download;
+
+/**
+ * Debug helper to create fake download PLISTs.
  */
 + (void)__DEBUG_createFakeData;
 
