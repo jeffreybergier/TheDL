@@ -1,7 +1,6 @@
 #import "TDLURLConnectionService.h"
 #import "TDLDownloadTask.h"
 #import "TDLDownload.h"
-#include <TargetConditionals.h>
 
 @implementation TDLURLConnectionService
 
@@ -92,21 +91,8 @@
     NSString *downloadsDir = [docsDir stringByAppendingPathComponent:@"Downloads"];
     
     NSFileManager *fm = [NSFileManager defaultManager];
-#if !TARGET_OS_IPHONE && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-    if ([fm respondsToSelector:@selector(createDirectoryAtPath:attributes:)]) {
-      SEL sel = @selector(createDirectoryAtPath:attributes:);
-      NSMethodSignature *sig = [fm methodSignatureForSelector:sel];
-      NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
-      [inv setTarget:fm];
-      [inv setSelector:sel];
-      [inv setArgument:&downloadsDir atIndex:2];
-      id attrs = nil;
-      [inv setArgument:&attrs atIndex:3];
-      [inv invoke];
-    }
-#else
-    [fm createDirectoryAtPath:downloadsDir withIntermediateDirectories:YES attributes:nil error:nil];
-#endif
+    // TODO: replace with createDirectoryAtPath:withIntermediateDirectories:attributes:error: for 10.5+ / iOS 2.0+
+    [fm createDirectoryAtPath:downloadsDir attributes:nil];
     
     // Save data blob
     NSString *udid = [[NSProcessInfo processInfo] globallyUniqueString];

@@ -3,11 +3,8 @@
 /**
  * The primary application delegate for TheDL on macOS.
  */
-#if defined(__MAC_10_6)
+// TODO: replace with NSApplicationDelegate protocol for 10.6+
 @interface AppDelegate : NSObject <NSApplicationDelegate> {
-#else
-@interface AppDelegate : NSObject {
-#endif
  @private
   NSWindow *_window;
 }

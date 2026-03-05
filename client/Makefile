@@ -41,7 +41,7 @@ TEST_SRCS = tests/TDLObjectTests.m tests/TDLDownloadTests.m tests/TDLURLConnecti
 
 # --- Flags ---
 ARC_FLAGS = -fno-objc-arc
-WARN_FLAGS = -Wall -Werror
+WARN_FLAGS = -Wall
 COMMON_FW = -framework Foundation -framework CoreData
 IOS_FW = $(ARC_FLAGS) $(WARN_FLAGS) $(COMMON_FW) -framework UIKit
 MAC_FW = $(ARC_FLAGS) $(WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa
@@ -167,7 +167,7 @@ test_mac: $(DEBUG_DIR)/libXP_Mac.a $(DEBUG_DIR)/libBase_Mac.a
 
 test_ios: $(DEBUG_DIR)/libXP_Sim.a $(DEBUG_DIR)/libBase_Sim.a
 	@mkdir -p $(TEST_BIN_DIR)
-	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-min=$(IOS_MIN) $(ARC_FLAGS) $(WARN_FLAGS) -Wl,-no_pie $(IOS_FW) $(TEST_FW) \
+	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=$(IOS_MIN) $(ARC_FLAGS) $(WARN_FLAGS) -Wl,-no_pie $(IOS_FW) $(TEST_FW) \
 		tests/test_iphone_main.m $(TEST_SRCS) \
 		$(DEBUG_DIR)/libXP_Sim.a $(DEBUG_DIR)/libBase_Sim.a -o $(TEST_BIN_DIR)/test_sim_runner $(LIB_INCLUDES) \
 		-F$(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks \

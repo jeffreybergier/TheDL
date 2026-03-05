@@ -1,6 +1,5 @@
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
-#include <TargetConditionals.h>
 
 @implementation TDLDownloadList
 
@@ -19,8 +18,8 @@
   }
   
   NSArray *files = nil;
-  // contentsOfDirectoryAtPath is iOS 2.0+
-  files = [fileManager contentsOfDirectoryAtPath:downloadsPath error:nil];
+  // TODO: replace with contentsOfDirectoryAtPath:error: for 10.5+ / iOS 2.0+
+  files = [fileManager directoryContentsAtPath:downloadsPath];
   
   if (files) {
     unsigned int count = [files count];
@@ -47,7 +46,8 @@
   NSString *downloadsPath = [documentsDirectory stringByAppendingPathComponent:@"Downloads"];
   
   NSFileManager *fileManager = [NSFileManager defaultManager];
-  [fileManager createDirectoryAtPath:downloadsPath withIntermediateDirectories:YES attributes:nil error:nil];
+  // TODO: replace with createDirectoryAtPath:withIntermediateDirectories:attributes:error: for 10.5+ / iOS 2.0+
+  [fileManager createDirectoryAtPath:downloadsPath attributes:nil];
   
   NSArray *fakeNames = [NSArray arrayWithObjects:@"Debian DVD", @"Tiger.dmg", @"Music.mp3", nil];
   unsigned int i;

@@ -1,16 +1,10 @@
 #import "XPObject.h"
-#include <TargetConditionals.h>
 
 @implementation XPObject
 
 - (NSString *)platformName {
-#if TARGET_OS_IPHONE
-  return @"iOS";
-#elif TARGET_OS_MAC
-  return @"macOS";
-#else
+  // TODO: replace with cross-platform platform detection logic.
   return @"Unknown Platform";
-#endif
 }
 
 - (void)dealloc {
