@@ -62,7 +62,7 @@ libBase_Neko.a: $(SRCS)
 test_mac: libBase_Mac.a
 	$(CC) $(MAC_MODERN_ARCHS) -isysroot $(MAC_MODERN_SDK) -mmacosx-version-min=$(MAC_MODERN_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) \
 		-framework Foundation -framework CoreData -framework AppKit -framework XCTest \
-		../../tests/test_mac_main.m $(TEST_SRCS) libBase_Mac.a $(XP_DIR)/libXP_Mac.a -o test_mac_runner $(LIB_INCLUDES) \
+		../../mac/tests/test_mac_main.m $(TEST_SRCS) libBase_Mac.a $(XP_DIR)/libXP_Mac.a -o test_mac_runner $(LIB_INCLUDES) \
 		-F$(XCODE_PATH)/Platforms/MacOSX.platform/Developer/Library/Frameworks \
 		-Xlinker -rpath -Xlinker $(XCODE_PATH)/Platforms/MacOSX.platform/Developer/Library/Frameworks
 	./test_mac_runner
@@ -70,7 +70,7 @@ test_mac: libBase_Mac.a
 test_sim: libBase_Sim.a
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -Wl,-no_pie \
 		-framework Foundation -framework CoreData -framework UIKit -framework XCTest \
-		../../tests/test_iphone_main.m $(TEST_SRCS) libBase_Sim.a $(XP_DIR)/libXP_Sim.a -o test_sim_runner $(LIB_INCLUDES) \
+		../../phone/tests/test_iphone_main.m $(TEST_SRCS) libBase_Sim.a $(XP_DIR)/libXP_Sim.a -o test_sim_runner $(LIB_INCLUDES) \
 		-F$(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks \
 		-Xlinker -rpath -Xlinker $(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks
 	xcrun simctl spawn booted ./test_sim_runner

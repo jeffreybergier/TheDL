@@ -1,10 +1,10 @@
 #import "XPObject.h"
+#import "CrossPlatform.h"
 
 @implementation XPObject
 
 - (NSString *)platformName {
-  // TODO: replace with cross-platform platform detection logic.
-  return @"Unknown Platform";
+  return XPGetPlatformName();
 }
 
 - (void)dealloc {

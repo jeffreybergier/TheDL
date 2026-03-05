@@ -91,6 +91,11 @@
       cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault 
                                      reuseIdentifier:InputCellID] autorelease];
       [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
+    }
+    
+    // Ensure _urlField is in the current cell (handle reuse)
+    if ([_urlField superview] != [cell contentView]) {
+      [_urlField removeFromSuperview];
       [[cell contentView] addSubview:_urlField];
     }
     return cell;
