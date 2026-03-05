@@ -21,7 +21,7 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  [[self view] setBackgroundColor:[UIColor blackColor]];
+  [[self view] setBackgroundColor:[UIColor whiteColor]];
   
   UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] 
                                   initWithBarButtonSystemItem:UIBarButtonSystemItemDone 
@@ -32,7 +32,7 @@
   
   _scrollView = [[UIScrollView alloc] initWithFrame:[[self view] bounds]];
   [_scrollView setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
-  [_scrollView setBackgroundColor:[UIColor blackColor]];
+  [_scrollView setBackgroundColor:[UIColor whiteColor]];
   [_scrollView setDelegate:self];
   [_scrollView setMinimumZoomScale:1.0];
   [_scrollView setMaximumZoomScale:5.0];
@@ -43,18 +43,20 @@
   if (image) {
     _imageView = [[UIImageView alloc] initWithImage:image];
     [_imageView setUserInteractionEnabled:YES];
+    [_imageView setFrame:CGRectMake(0, 0, image.size.width, image.size.height)];
     [_scrollView setContentSize:[image size]];
     [_scrollView addSubview:_imageView];
     
-    // Fit the image to the screen initially if it's larger
+    // Fit the image to the screen initially
     CGFloat widthScale = [[self view] bounds].size.width / [image size].width;
     CGFloat heightScale = [[self view] bounds].size.height / [image size].height;
     CGFloat minScale = widthScale < heightScale ? widthScale : heightScale;
     
-    if (minScale < 1.0) {
-      [_scrollView setMinimumZoomScale:minScale];
-      [_scrollView setZoomScale:minScale];
-    }
+    [_scrollView setMinimumZoomScale:minScale];
+    [_scrollView setZoomScale:minScale];
+    
+    // Center the image initially
+    [self scrollViewDidZoom:_scrollView];
     
     // Double tap to zoom
     UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] 
@@ -65,6 +67,13 @@
     [doubleTap release];
   } else {
     NSLog(@"[TDLImageViewController viewDidLoad] Failed to load image at: %@", [_download filePath]);
+    
+    UILabel *errorLabel = [[UILabel alloc] initWithFrame:[[self view] bounds]];
+    [errorLabel setText:@"Failed to load image"];
+    [errorLabel setTextAlignment:UITextAlignmentCenter];
+    [errorLabel setBackgroundColor:[UIColor whiteColor]];
+    [[self view] addSubview:errorLabel];
+    [errorLabel release];
   }
   
   [[self view] addSubview:_scrollView];

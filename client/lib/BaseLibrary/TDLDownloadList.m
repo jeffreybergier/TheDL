@@ -96,13 +96,25 @@
 
 + (void)__DEBUG_createFakeData {
   TDLDownloadList *list = [TDLDownloadList sharedList];
-  NSArray *fakeNames = [NSArray arrayWithObjects:@"Debian DVD", @"Tiger.dmg", @"Music.mp3", nil];
+  
+  // Clean start for debug data
+  [list->_downloadCache removeAllObjects];
+  
+  NSArray *fakeNames = [NSArray arrayWithObjects:@"Debian DVD", @"Lion.jpg", @"Music.mp3", nil];
   unsigned int i;
   for (i = 0; i < [fakeNames count]; i++) {
+    NSString *name = [fakeNames objectAtIndex:i];
     TDLDownload *download = [list createDownload];
-    [download setDisplayName:[fakeNames objectAtIndex:i]];
-    [download setFilePath:@"/tmp/fake"];
-    [download setContentType:@"application/octet-stream"];
+    [download setDisplayName:name];
+    
+    if ([name isEqualToString:@"Lion.jpg"]) {
+      [download setFilePath:@"/Library/Desktop Pictures/Lion.jpg"];
+      [download setContentType:@"image/jpeg"];
+    } else {
+      [download setFilePath:@"/tmp/fake"];
+      [download setContentType:@"application/octet-stream"];
+    }
+    
     [download setActualSize:1024 * (i + 1)];
     [download setContentSize:2048 * (i + 1)];
     [download setState:TDLDownloadStateFinished];
