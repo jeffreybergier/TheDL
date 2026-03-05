@@ -1,6 +1,7 @@
 #import "TDLDownloadTableViewController.h"
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
+#import "TDLImageViewController.h"
 
 @implementation TDLDownloadTableViewController
 
@@ -11,6 +12,12 @@
     _downloads = [[NSArray alloc] init];
   }
   return self;
+}
+
+- (void)dealloc {
+  [_downloads release];
+  [_selectedDownload release];
+  [super dealloc];
 }
 
 - (void)viewDidLoad {
@@ -40,11 +47,6 @@
   NSLog(@"[TDLDownloadTableViewController createDebugData] Creating fake data...");
   [TDLDownloadList __DEBUG_createFakeData];
   [self refreshDownloads];
-}
-
-- (void)dealloc {
-  [_downloads release];
-  [super dealloc];
 }
 
 - (void)refreshDownloads {
@@ -93,11 +95,18 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
   [tableView deselectRowAtIndexPath:indexPath animated:YES];
   
+  [_selectedDownload release];
+  _selectedDownload = [[_downloads objectAtIndex:[indexPath row]] retain];
+  
   UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Download Actions"
                                                            delegate:self
                                                   cancelButtonTitle:@"Cancel"
                                              destructiveButtonTitle:nil
                                                   otherButtonTitles:@"Button 1", @"Button 2", nil];
+  
+  if ([[_selectedDownload contentType] hasPrefix:@"image/"]) {
+    [actionSheet addButtonWithTitle:@"View Image"];
+  }
   
   [actionSheet showInView:[self view]];
   [actionSheet release];
@@ -106,7 +115,17 @@
 #pragma mark - UIActionSheetDelegate
 
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
-  NSLog(@"[TDLDownloadTableViewController actionSheet:clickedButtonAtIndex:] buttonIndex: %ld", (long)buttonIndex);
+  NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
+  NSLog(@"[TDLDownloadTableViewController actionSheet:clickedButtonAtIndex:] title: %@, index: %ld", 
+        title, (long)buttonIndex);
+  
+  if ([title isEqualToString:@"View Image"]) {
+    TDLImageViewController *imageVC = [[TDLImageViewController alloc] initWithDownload:_selectedDownload];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:imageVC];
+    [self presentModalViewController:nav animated:YES];
+    [imageVC release];
+    [nav release];
+  }
 }
 
 @end

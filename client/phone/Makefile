@@ -10,9 +10,8 @@ LIB_INCLUDES = -I. -I$(XP_DIR) -I$(BASE_DIR)
 
 # Source
 SRCS = ios_main.m AppDelegate.m RootViewController.m \
-	TDLDownloadTableViewController.m TDLServiceListViewController.m \
-	TDLURLConnectionServiceTableViewController.m
-
+        TDLDownloadTableViewController.m TDLServiceListViewController.m \
+        TDLURLConnectionServiceTableViewController.m TDLImageViewController.m
 TEST_SRCS = tests/test_iphone_main.m
 
 # Build Rules
