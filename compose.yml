@@ -4,18 +4,35 @@
 # To see original commands or to use without compose,
 # see Containerfile
 
+# Launch standard Gemini (Fallback):
 # docker compose run --rm gemini
 
-## 
+# Launch Cross-Compile Gemini (Current):
+# docker compose run --rm gemini-cross
 
 services:
-  # 5. Run Gemini
+  # 5. Run Gemini (Original Fallback)
   gemini:
     build:
       context: .
       dockerfile: Containerfile
       target: gemini
-    image: rssplanet-gemini
+    image: thedl-gemini
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ~/.gemini:/root/.gemini
+    command: gemini
+    stdin_open: true
+    tty: true
+
+  # 6. Run Gemini with Cross-Compilation Tools
+  gemini-cross:
+    build:
+      context: .
+      dockerfile: Containerfile
+      target: gemini-cross
+    image: thedl-gemini-cross
     volumes:
       - .:/app
       - /app/node_modules
