@@ -16,28 +16,22 @@ RELEASE_DIR = $(BUILD_DIR)/release
 TEST_BIN_DIR = $(BUILD_DIR)/tests
 
 # --- Source Lists ---
-BASE_SRCS = $(BASE_DIR)/TDLObject.m $(BASE_DIR)/TDLDownload.m $(BASE_DIR)/TDLDownloadList.m \
-            $(BASE_DIR)/TDLService.m $(BASE_DIR)/TDLDownloadTask.m \
-            $(BASE_DIR)/TDLURLConnectionService.m $(BASE_DIR)/TDLServiceManager.m
-
 PHONE_APP_SRCS = $(PHONE_DIR)/ios_main.m $(PHONE_DIR)/AppDelegate.m $(PHONE_DIR)/RootViewController.m \
                  $(PHONE_DIR)/TDLDownloadTableViewController.m $(PHONE_DIR)/TDLServiceListViewController.m \
                  $(PHONE_DIR)/TDLURLConnectionServiceTableViewController.m
 
 MAC_APP_SRCS = $(MAC_DIR)/mac_main.m $(MAC_DIR)/AppDelegate.m
 
-TEST_SRCS = tests/TDLObjectTests.m tests/TDLDownloadTests.m tests/TDLURLConnectionServiceTests.m
-
 # --- Helper for Library Inclusion ---
 LIB_INCLUDES = -I$(XP_DIR) -I$(BASE_DIR) -I$(PHONE_DIR) -I$(MAC_DIR)
 
 # --- Build Rules ---
 
-.PHONY: all debug release clean test_mac test_ios neko xp_libs
+.PHONY: all debug release clean test_mac test_ios neko xp_libs base_libs
 
 all: debug test_mac test_ios
 
-# --- Delegate CrossPlatform build to its own Makefile ---
+# --- Delegate CrossPlatform build ---
 xp_libs:
 	@echo "Building CrossPlatform libraries..."
 	$(MAKE) -C $(XP_DIR) all
@@ -47,48 +41,22 @@ xp_libs:
 	cp $(XP_DIR)/libXP_Mac.a $(DEBUG_DIR)/
 	cp $(XP_DIR)/libXP_Neko.a $(DEBUG_DIR)/
 
-# --- Static Libraries (Debug) ---
+# --- Delegate BaseLibrary build ---
+base_libs: xp_libs
+	@echo "Building BaseLibrary libraries..."
+	$(MAKE) -C $(BASE_DIR) all
+	@mkdir -p $(DEBUG_DIR)
+	cp $(BASE_DIR)/libBase_iOS.a $(DEBUG_DIR)/
+	cp $(BASE_DIR)/libBase_Sim.a $(DEBUG_DIR)/
+	cp $(BASE_DIR)/libBase_Mac.a $(DEBUG_DIR)/
+	cp $(BASE_DIR)/libBase_Neko.a $(DEBUG_DIR)/
 
+# --- Static Library Dependencies ---
 $(DEBUG_DIR)/libXP_iOS.a $(DEBUG_DIR)/libXP_Sim.a $(DEBUG_DIR)/libXP_Mac.a $(DEBUG_DIR)/libXP_Neko.a: xp_libs
-
-$(DEBUG_DIR)/libBase_iOS.a: $(BASE_SRCS) $(DEBUG_DIR)/libXP_iOS.a
-	@mkdir -p $(DEBUG_DIR)
-	@objs=""; for src in $(BASE_SRCS); do \
-		obj=$(DEBUG_DIR)/`basename $$src .m`_iOS.o; \
-		$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -g -DDEBUG -c $$src -o $$obj $(LIB_INCLUDES); \
-		objs="$$objs $$obj"; \
-	done; \
-	libtool -static -o $@ $$objs
-
-$(DEBUG_DIR)/libBase_Sim.a: $(BASE_SRCS) $(DEBUG_DIR)/libXP_Sim.a
-	@mkdir -p $(DEBUG_DIR)
-	@objs=""; for src in $(BASE_SRCS); do \
-		obj=$(DEBUG_DIR)/`basename $$src .m`_Sim.o; \
-		$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -g -DDEBUG -c $$src -o $$obj $(LIB_INCLUDES); \
-		objs="$$objs $$obj"; \
-	done; \
-	libtool -static -o $@ $$objs
-
-$(DEBUG_DIR)/libBase_Mac.a: $(BASE_SRCS) $(DEBUG_DIR)/libXP_Mac.a
-	@mkdir -p $(DEBUG_DIR)
-	@objs=""; for src in $(BASE_SRCS); do \
-		obj=$(DEBUG_DIR)/`basename $$src .m`_Mac.o; \
-		$(CC) $(MAC_MODERN_ARCHS) -isysroot $(MAC_MODERN_SDK) -mmacosx-version-min=$(MAC_MODERN_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -g -DDEBUG -c $$src -o $$obj $(LIB_INCLUDES); \
-		objs="$$objs $$obj"; \
-	done; \
-	libtool -static -o $@ $$objs
-
-$(DEBUG_DIR)/libBase_Neko.a: $(BASE_SRCS) $(DEBUG_DIR)/libXP_Neko.a
-	@mkdir -p $(DEBUG_DIR)
-	@objs=""; for src in $(BASE_SRCS); do \
-		obj=$(DEBUG_DIR)/`basename $$src .m`_Neko.o; \
-		$(NEKO_CC) $(MAC_NEKO_ARCHS) -isysroot $(MAC_NEKO_SDK) -mmacosx-version-min=$(MAC_NEKO_MIN) $(NEKO_FLAGS) -g -DDEBUG -c $$src -o $$obj $(LIB_INCLUDES); \
-		objs="$$objs $$obj"; \
-	done; \
-	libtool -static -o $@ $$objs
+$(DEBUG_DIR)/libBase_iOS.a $(DEBUG_DIR)/libBase_Sim.a $(DEBUG_DIR)/libBase_Mac.a $(DEBUG_DIR)/libBase_Neko.a: base_libs
 
 # --- Debug Build Targets ---
-debug: clean_debug xp_libs $(DEBUG_DIR)/libBase_Mac.a $(DEBUG_DIR)/libBase_iOS.a $(DEBUG_DIR)/libBase_Sim.a
+debug: clean_debug base_libs
 	@echo "Building Debug Targets..."
 	$(CC) $(MAC_MODERN_ARCHS) -isysroot $(MAC_MODERN_SDK) -mmacosx-version-min=$(MAC_MODERN_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(MAC_FW) -g -DDEBUG \
 		$(MAC_APP_SRCS) $(DEBUG_DIR)/libXP_Mac.a $(DEBUG_DIR)/libBase_Mac.a -o $(DEBUG_DIR)/hello_mac $(LIB_INCLUDES)
@@ -107,7 +75,7 @@ debug: clean_debug xp_libs $(DEBUG_DIR)/libBase_Mac.a $(DEBUG_DIR)/libBase_iOS.a
 	cp $(PHONE_DIR)/Info_iOS.plist "$(DEBUG_DIR)/TheDL-Sim.app/Info.plist"
 
 # Optional Neko Target
-neko: xp_libs $(DEBUG_DIR)/libBase_Neko.a
+neko: base_libs
 	$(NEKO_CC) $(MAC_NEKO_ARCHS) -isysroot $(MAC_NEKO_SDK) -mmacosx-version-min=$(MAC_NEKO_MIN) $(NEKO_FLAGS) $(MAC_FW) -g -DDEBUG \
 		$(MAC_APP_SRCS) $(DEBUG_DIR)/libXP_Neko.a $(DEBUG_DIR)/libBase_Neko.a -o $(DEBUG_DIR)/hello_neko $(LIB_INCLUDES)
 	mkdir -p "$(DEBUG_DIR)/TheDL-Neko.app/Contents/MacOS"
@@ -115,34 +83,25 @@ neko: xp_libs $(DEBUG_DIR)/libBase_Neko.a
 	cp $(MAC_DIR)/Info_Neko.plist "$(DEBUG_DIR)/TheDL-Neko.app/Contents/Info.plist"
 
 # --- Testing ---
-test_mac: xp_libs $(DEBUG_DIR)/libBase_Mac.a
-	@mkdir -p $(TEST_BIN_DIR)
-	$(CC) -arch x86_64 -isysroot $(MAC_MODERN_SDK) -mmacosx-version-min=$(MAC_MODERN_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(MAC_FW) $(TEST_FW) \
-		tests/test_mac_main.m $(TEST_SRCS) \
-		$(DEBUG_DIR)/libXP_Mac.a $(DEBUG_DIR)/libBase_Mac.a -o $(TEST_BIN_DIR)/test_runner $(LIB_INCLUDES) \
-		-F$(XCODE_PATH)/Platforms/MacOSX.platform/Developer/Library/Frameworks \
-		-Xlinker -rpath -Xlinker $(XCODE_PATH)/Platforms/MacOSX.platform/Developer/Library/Frameworks
-	@echo "Running Mac Tests..."
-	$(TEST_BIN_DIR)/test_runner
+test_mac: base_libs
+	$(MAKE) -C $(XP_DIR) test_mac
+	$(MAKE) -C $(BASE_DIR) test_mac
 
-test_ios: xp_libs $(DEBUG_DIR)/libBase_Sim.a
-	@mkdir -p $(TEST_BIN_DIR)
-	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -Wl,-no_pie $(IOS_FW) $(TEST_FW) \
-		tests/test_iphone_main.m $(TEST_SRCS) \
-		$(DEBUG_DIR)/libXP_Sim.a $(DEBUG_DIR)/libBase_Sim.a -o $(TEST_BIN_DIR)/test_sim_runner $(LIB_INCLUDES) \
-		-F$(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks \
-		-Xlinker -rpath -Xlinker $(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks
-	@echo "Running iOS Simulator Tests..."
-	xcrun simctl spawn booted $(TEST_BIN_DIR)/test_sim_runner
+test_ios: base_libs
+	$(MAKE) -C $(XP_DIR) test_sim
+	$(MAKE) -C $(BASE_DIR) test_sim
 
 clean:
 	rm -rf $(BUILD_DIR)
 	$(MAKE) -C $(XP_DIR) clean
+	$(MAKE) -C $(BASE_DIR) clean
 
 clean_debug:
 	rm -rf $(DEBUG_DIR)
 	$(MAKE) -C $(XP_DIR) clean
+	$(MAKE) -C $(BASE_DIR) clean
 
 clean_release:
 	rm -rf $(RELEASE_DIR)
 	$(MAKE) -C $(XP_DIR) clean
+	$(MAKE) -C $(BASE_DIR) clean
