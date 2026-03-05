@@ -3,7 +3,7 @@
 /**
  * A table view controller that displays the list of downloaded files.
  */
-@interface TDLDownloadTableViewController : UITableViewController {
+@interface TDLDownloadTableViewController : UITableViewController <UIActionSheetDelegate> {
  @private
   NSArray *_downloads;
 }

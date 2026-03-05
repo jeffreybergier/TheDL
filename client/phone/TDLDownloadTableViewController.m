@@ -88,4 +88,25 @@
   return cell;
 }
 
+#pragma mark - Table view delegate
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+  [tableView deselectRowAtIndexPath:indexPath animated:YES];
+  
+  UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Download Actions"
+                                                           delegate:self
+                                                  cancelButtonTitle:@"Cancel"
+                                             destructiveButtonTitle:nil
+                                                  otherButtonTitles:@"Button 1", @"Button 2", nil];
+  
+  [actionSheet showInView:[self view]];
+  [actionSheet release];
+}
+
+#pragma mark - UIActionSheetDelegate
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
+  NSLog(@"[TDLDownloadTableViewController actionSheet:clickedButtonAtIndex:] buttonIndex: %ld", (long)buttonIndex);
+}
+
 @end
