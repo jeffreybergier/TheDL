@@ -17,7 +17,7 @@ WARN_FLAGS = -Wall
 # GCC 4.0 (Neko) doesn't support -Wno-error=deprecated-declarations
 CLANG_WARN_FLAGS = $(WARN_FLAGS) -Wno-error=deprecated-declarations
 
-COMMON_FW = -framework Foundation -framework CoreData
+COMMON_FW = -ObjC -framework Foundation -framework CoreData
 IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit
 MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa
 TEST_FW = -framework XCTest

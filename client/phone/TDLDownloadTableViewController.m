@@ -51,6 +51,7 @@
 
 - (void)refreshDownloads {
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Start");
+  [[TDLDownloadList sharedList] loadDownloadsFromDisk];
   [_downloads release];
   _downloads = [[[TDLDownloadList sharedList] allDownloads] retain];
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Loaded %lu downloads", (unsigned long)[_downloads count]);

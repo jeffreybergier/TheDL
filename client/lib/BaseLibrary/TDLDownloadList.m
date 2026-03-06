@@ -33,6 +33,8 @@
 }
 
 - (void)loadDownloadsFromDisk {
+  [_downloadCache removeAllObjects];
+  
   NSString *downloadsPath = [self downloadsDirectory];
   NSFileManager *fileManager = [NSFileManager defaultManager];
   
