@@ -1,5 +1,6 @@
 #import "AppDelegate.h"
 #import "RootViewController.h"
+#import "CrossPlatform.h"
 
 @implementation AppDelegate
 
@@ -17,6 +18,9 @@
 - (BOOL)application:(UIApplication *)application 
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   NSLog(@"[AppDelegate application:didFinishLaunchingWithOptions:] Start");
+  
+  // Verify libcurl/CrossPlatform linking
+  XPLogLibraryVersions();
   
   _window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
   [_window setBackgroundColor:[UIColor whiteColor]];

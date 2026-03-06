@@ -35,11 +35,9 @@ typedef NSTextAlignment XPTextAlignment;
 #endif
 
 /**
- * Returns the name of the current platform.
- *
- * @return A string ("iOS" or "macOS").
+ * Logs the versions of all libraries and frameworks used.
  */
-NSString *XPGetPlatformName(void);
+void XPLogLibraryVersions(void);
 
 /**
  * A cross-platform video player view controller.

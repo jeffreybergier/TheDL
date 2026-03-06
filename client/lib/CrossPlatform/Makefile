@@ -1,6 +1,10 @@
 # Include centralized configuration
 include ../../common.mk
 
+# Paths
+CURL_DIR = ../CURL/ios
+CURL_INC = -I$(CURL_DIR)/include
+
 # Source
 SRCS = XPObject.m CrossPlatform.m
 TEST_SRCS = tests/XPObjectTests.m
@@ -20,7 +24,7 @@ neko: libXP_Neko.a
 libXP_iOS.a: $(SRCS)
 	@objs=""; for src in $(SRCS); do \
 		obj=`basename $$src .m`_iOS.o; \
-		$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -g -DDEBUG -c $$src -o $$obj; \
+		$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(CURL_INC) -g -DDEBUG -c $$src -o $$obj; \
 		objs="$$objs $$obj"; \
 	done; \
 	libtool -static -o $@ $$objs
@@ -28,7 +32,7 @@ libXP_iOS.a: $(SRCS)
 libXP_Sim.a: $(SRCS)
 	@objs=""; for src in $(SRCS); do \
 		obj=`basename $$src .m`_Sim.o; \
-		$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -g -DDEBUG -c $$src -o $$obj; \
+		$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(CURL_INC) -g -DDEBUG -c $$src -o $$obj; \
 		objs="$$objs $$obj"; \
 	done; \
 	libtool -static -o $@ $$objs

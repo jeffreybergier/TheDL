@@ -4,14 +4,22 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/QuartzCore.h>
+#import <curl/curl.h>
+#import <openssl/opensslv.h>
+#import <zlib.h>
 #endif
 
-NSString *XPGetPlatformName() {
+void XPLogLibraryVersions() {
+  NSLog(@"--- Library Versions ---");
 #if TARGET_OS_IPHONE
-  return @"iOS";
+  NSLog(@"[OS] iOS %@", [[UIDevice currentDevice] systemVersion]);
+  NSLog(@"[CURL] %s", curl_version());
+  NSLog(@"[OpenSSL] %s", OPENSSL_VERSION_TEXT);
+  NSLog(@"[zlib] %s", ZLIB_VERSION);
 #else
-  return @"macOS";
+  NSLog(@"[OS] macOS (Legacy)");
 #endif
+  NSLog(@"------------------------");
 }
 
 @implementation XPPlayerViewController

@@ -4,9 +4,11 @@ include ../common.mk
 # Paths
 XP_DIR = ../lib/CrossPlatform
 BASE_DIR = ../lib/BaseLibrary
+CURL_DIR = ../lib/CURL/ios
 
 # Helper for Library Inclusion
-LIB_INCLUDES = -I. -I$(XP_DIR) -I$(BASE_DIR)
+LIB_INCLUDES = -I. -I$(XP_DIR) -I$(BASE_DIR) -I$(CURL_DIR)/include
+CURL_LIBS = $(CURL_DIR)/lib/libcurl.a $(CURL_DIR)/lib/libssl.a $(CURL_DIR)/lib/libcrypto.a $(CURL_DIR)/lib/libssh.a $(CURL_DIR)/lib/libz.a
 
 # Source
 SRCS = ios_main.m AppDelegate.m RootViewController.m \
@@ -24,7 +26,7 @@ phone: TheDL-Phone.app
 TheDL-Phone.app: $(SRCS)
 	@mkdir -p $@
 	$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(IOS_FW) -g -DDEBUG \
-		$(SRCS) ../build/debug/libXP_iOS.a ../build/debug/libBase_iOS.a -o $@/TheDL $(LIB_INCLUDES)
+		$(SRCS) ../build/debug/libXP_iOS.a ../build/debug/libBase_iOS.a $(CURL_LIBS) -o $@/TheDL $(LIB_INCLUDES)
 	cp Info_iOS.plist $@/Info.plist
 
 # Build for Simulator
@@ -32,7 +34,7 @@ sim: TheDL-Sim.app
 TheDL-Sim.app: $(SRCS)
 	@mkdir -p $@
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=$(IOS_MIN) -Wl,-no_pie $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(IOS_FW) -g -DDEBUG \
-		$(SRCS) ../build/debug/libXP_Sim.a ../build/debug/libBase_Sim.a -o $@/TheDL $(LIB_INCLUDES)
+		$(SRCS) ../build/debug/libXP_Sim.a ../build/debug/libBase_Sim.a $(CURL_LIBS) -o $@/TheDL $(LIB_INCLUDES)
 	cp Info_iOS.plist $@/Info.plist
 
 # Unit Tests for Simulator

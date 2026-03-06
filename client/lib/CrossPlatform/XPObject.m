@@ -4,7 +4,11 @@
 @implementation XPObject
 
 - (NSString *)platformName {
-  return XPGetPlatformName();
+#if TARGET_OS_IPHONE
+  return @"iOS";
+#else
+  return @"macOS";
+#endif
 }
 
 - (void)dealloc {
