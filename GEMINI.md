@@ -15,6 +15,13 @@
     - **No Property Syntax:** Do not use `@property` or `@synthesize`. Use manual instance variables and accessor methods instead.
     - **No Dot Syntax:** Do not use dot notation for property access or method calls (e.g., `object.name`). Always use square bracket message sending (e.g., `[object name]` or `[object setName:...]`).
     - **Older Objective-C Runtime:** Target the older Objective-C ABI for 32-bit platforms (Mac OS X 10.4 and iOS 4.0).
+    - **Legacy Code Hardening:**
+        - **Simplified Branching:** Avoid `TargetConditionals.h` and complex `#if` blocks in library logic. Favor stable legacy code with `// TODO` comments for future modernization.
+        - **Objective-C 1.0 Iteration:** Always use `NSEnumerator` instead of C-style `for` loops or Objective-C 2.0 "Fast Enumeration" (`for...in`) to satisfy older compilers (Tiger/G3-era).
+        - **Header Integrity:** ALL methods must be declared in the header file for older Objective-C versions to avoid "Missing Method" warnings.
+    - **Cross-Platform UI Abstractions:**
+        - **Alignment Unification:** Use version-aware macros in `CrossPlatform.h` (e.g., `XPTextAlignmentCenter`) to switch between `NSTextAlignment`, `UITextAlignment`, and `NSCenterTextAlignment` based on the target SDK.
+        - **UI Navigation Hierarchy (iOS):** Wrap `UIViewController`s inside `UINavigationController`s, and then put those `UINavigationController`s inside the `UITabBarController` to ensure navigation bars and buttons appear correctly.
 - Lastly, please always follow the google objective-c style guide which I pasted below for your reference
 
 # Google Objective-C Style Guide

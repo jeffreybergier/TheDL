@@ -23,3 +23,21 @@
  * @return A string ("iOS" or "macOS").
  */
 NSString *XPGetPlatformName(void);
+
+#if TARGET_OS_IPHONE
+typedef NSTextAlignment XPTextAlignment;
+#define XPTextAlignmentLeft NSTextAlignmentLeft
+#define XPTextAlignmentCenter NSTextAlignmentCenter
+#define XPTextAlignmentRight NSTextAlignmentRight
+#else
+typedef NSTextAlignment XPTextAlignment;
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 10110
+#define XPTextAlignmentLeft NSTextAlignmentLeft
+#define XPTextAlignmentCenter NSTextAlignmentCenter
+#define XPTextAlignmentRight NSTextAlignmentRight
+#else
+#define XPTextAlignmentLeft NSLeftTextAlignment
+#define XPTextAlignmentCenter NSCenterTextAlignment
+#define XPTextAlignmentRight NSRightTextAlignment
+#endif
+#endif

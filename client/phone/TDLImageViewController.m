@@ -1,5 +1,6 @@
 #import "TDLImageViewController.h"
 #import "TDLDownload.h"
+#import "CrossPlatform.h"
 
 @implementation TDLImageViewController
 
@@ -70,7 +71,7 @@
     
     UILabel *errorLabel = [[UILabel alloc] initWithFrame:[[self view] bounds]];
     [errorLabel setText:@"Failed to load image"];
-    [errorLabel setTextAlignment:UITextAlignmentCenter];
+    [errorLabel setTextAlignment:XPTextAlignmentCenter];
     [errorLabel setBackgroundColor:[UIColor whiteColor]];
     [[self view] addSubview:errorLabel];
     [errorLabel release];
