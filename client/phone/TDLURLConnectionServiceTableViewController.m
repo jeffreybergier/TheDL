@@ -40,12 +40,30 @@
 }
 
 - (void)triggerDebugDownload {
-  NSLog(@"[TDLURLConnectionServiceTableViewController triggerDebugDownload] Starting debug fetch for Google logo...");
+  UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:@"Debug Downloads"
+                                                     delegate:self
+                                            cancelButtonTitle:@"Cancel"
+                                       destructiveButtonTitle:nil
+                                            otherButtonTitles:@"Image (Google Logo)", @"Video (Sample)", nil];
+  [sheet showInView:[self view]];
+  [sheet release];
+}
+
+#pragma mark - UIActionSheetDelegate
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
+  NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
+  NSString *urlStr = nil;
   
-  NSString *urlStr = @"https://www.google.com/images/branding/googlelogo/1x/googlelogo_white_background_color_272x92dp.png";
-  NSURL *url = [NSURL URLWithString:urlStr];
-  if (url) {
-    [_service fetchURL:url];
+  if ([title isEqualToString:@"Image (Google Logo)"]) {
+    urlStr = @"https://www.google.com/images/branding/googlelogo/1x/googlelogo_white_background_color_272x92dp.png";
+  } else if ([title isEqualToString:@"Video (Sample)"]) {
+    urlStr = @"http://rss-the-planet.saturdayapps.workers.dev/proxy/aHR0cHMlM0ElMkYlMkZ3c2IuaG9zdGRvbi5uZS5qcCUyRnNnbTIzNCUyRmNhY2hlJTJGbWVkaWFfYXR0YWNobWVudHMlMkZmaWxlcyUyRjExNiUyRjE3OSUyRjkyMCUyRjEyMCUyRjAyNyUyRjA3MyUyRm9yaWdpbmFsJTJGODQ4NDAzMThkNGIzNTlhMi5tcDQ%3D/318d4b359a2.mp4?key=vXnQzLwR&option=asset";
+  }
+  
+  if (urlStr) {
+    NSLog(@"[TDLURLConnectionServiceTableViewController] Fetching debug URL: %@", urlStr);
+    [_service fetchURL:[NSURL URLWithString:urlStr]];
   }
 }
 

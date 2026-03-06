@@ -2,6 +2,7 @@
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
 #import "TDLImageViewController.h"
+#import <MediaPlayer/MediaPlayer.h>
 
 @implementation TDLDownloadTableViewController
 
@@ -15,8 +16,10 @@
 }
 
 - (void)dealloc {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
   [_downloads release];
   [_selectedDownload release];
+  [_moviePlayer release];
   [super dealloc];
 }
 
@@ -109,6 +112,10 @@
     [actionSheet addButtonWithTitle:@"View Image"];
   }
   
+  if ([[_selectedDownload contentType] hasPrefix:@"video/"]) {
+    [actionSheet addButtonWithTitle:@"Play"];
+  }
+  
   [actionSheet showInView:[self view]];
   [actionSheet release];
 }
@@ -126,6 +133,36 @@
     [self presentModalViewController:nav animated:YES];
     [imageVC release];
     [nav release];
+  } else if ([title isEqualToString:@"Play"]) {
+    NSURL *url = [NSURL fileURLWithPath:[_selectedDownload filePath]];
+    
+    if (_moviePlayer) {
+      [_moviePlayer release];
+      _moviePlayer = nil;
+    }
+    
+    _moviePlayer = [[MPMoviePlayerController alloc] initWithContentURL:url];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(moviePlayBackDidFinish:) 
+                                                 name:MPMoviePlayerPlaybackDidFinishNotification 
+                                               object:_moviePlayer];
+    
+    // In iOS 3.1, this plays full screen and manages its own window.
+    [_moviePlayer play];
+  }
+}
+
+- (void)moviePlayBackDidFinish:(NSNotification *)notification {
+  NSLog(@"[TDLDownloadTableViewController moviePlayBackDidFinish:]");
+  [[NSNotificationCenter defaultCenter] removeObserver:self 
+                                                  name:MPMoviePlayerPlaybackDidFinishNotification 
+                                                object:_moviePlayer];
+  
+  if (_moviePlayer) {
+    [_moviePlayer stop];
+    [_moviePlayer release];
+    _moviePlayer = nil;
   }
 }
 

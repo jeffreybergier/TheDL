@@ -5,7 +5,7 @@
 /**
  * A grouped table view controller for interacting with the NSURLConnection service.
  */
-@interface TDLURLConnectionServiceTableViewController : UITableViewController <UITextFieldDelegate> {
+@interface TDLURLConnectionServiceTableViewController : UITableViewController <UITextFieldDelegate, UIActionSheetDelegate> {
  @private
   TDLURLConnectionService *_service;
   UITextField *_urlField;

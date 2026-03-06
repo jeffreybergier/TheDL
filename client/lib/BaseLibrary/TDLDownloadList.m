@@ -101,34 +101,4 @@
   [[download dictionaryRepresentation] writeToFile:fullPath atomically:YES];
 }
 
-+ (void)__DEBUG_createFakeData {
-  TDLDownloadList *list = [TDLDownloadList sharedList];
-  
-  // Clean start for debug data
-  [list->_downloadCache removeAllObjects];
-  
-  NSArray *fakeNames = [NSArray arrayWithObjects:@"Debian DVD", @"Lion.jpg", @"Music.mp3", nil];
-  NSEnumerator *e = [fakeNames objectEnumerator];
-  NSString *name;
-  while ((name = [e nextObject])) {
-    TDLDownload *download = [list createDownload];
-    [download setDisplayName:name];
-    
-    if ([name isEqualToString:@"Lion.jpg"]) {
-      [download setFilePath:@"/Library/Desktop Pictures/Lion.jpg"];
-      [download setContentType:@"image/jpeg"];
-    } else {
-      [download setFilePath:@"/tmp/fake"];
-      [download setContentType:@"application/octet-stream"];
-    }
-    
-    static int i = 0;
-    [download setActualSize:1024 * (i + 1)];
-    [download setContentSize:2048 * (i + 1)];
-    [download setState:TDLDownloadStateFinished];
-    [list saveDownload:download];
-    i++;
-  }
-}
-
 @end

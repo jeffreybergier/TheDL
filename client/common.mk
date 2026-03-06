@@ -18,7 +18,7 @@ WARN_FLAGS = -Wall
 CLANG_WARN_FLAGS = $(WARN_FLAGS) -Wno-error=deprecated-declarations
 
 COMMON_FW = -ObjC -framework Foundation -framework CoreData
-IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit
+IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer
 MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa
 TEST_FW = -framework XCTest
 
