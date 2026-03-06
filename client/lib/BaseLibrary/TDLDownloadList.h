@@ -14,6 +14,16 @@
 + (TDLDownloadList *)sharedList;
 
 /**
+ * Returns the path to the directory where downloads are stored.
+ */
+- (NSString *)downloadsDirectory;
+
+/**
+ * Loads downloads from disk into the cache.
+ */
+- (void)loadDownloadsFromDisk;
+
+/**
  * Returns all downloads managed by the list.
  *
  * @return An NSArray of TDLDownload objects.

@@ -1,7 +1,6 @@
 #import "TDLURLConnectionService.h"
 #import "TDLDownload.h"
 #import "TDLDownloadList.h"
-#include <TargetConditionals.h>
 
 @implementation TDLURLConnectionService
 
@@ -67,7 +66,11 @@
 - (NSArray *)activeTasks {
   // Return only tasks belonging to this service that are not finished
   NSMutableArray *tasks = [NSMutableArray array];
-  for (TDLDownload *download in _taskList) {
+  
+  // TODO: replace with fast enumeration for 10.5+ / iOS 2.0+
+  NSEnumerator *e = [_taskList objectEnumerator];
+  TDLDownload *download;
+  while ((download = [e nextObject])) {
     if ([download state] == TDLDownloadStateDownloading || [download state] == TDLDownloadStateFailed) {
       [tasks addObject:download];
     }

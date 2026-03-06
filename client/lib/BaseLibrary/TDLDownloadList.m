@@ -1,6 +1,5 @@
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
-#include <TargetConditionals.h>
 
 @implementation TDLDownloadList
 
@@ -41,11 +40,12 @@
     return;
   }
   
-  NSArray *files = [fileManager contentsOfDirectoryAtPath:downloadsPath error:nil];
+  // TODO: replace with contentsOfDirectoryAtPath:error: for 10.5+ / iOS 2.0+
+  NSArray *files = [fileManager directoryContentsAtPath:downloadsPath];
   if (files) {
-    unsigned int i;
-    for (i = 0; i < [files count]; i++) {
-      NSString *file = [files objectAtIndex:i];
+    NSEnumerator *e = [files objectEnumerator];
+    NSString *file;
+    while ((file = [e nextObject])) {
       if ([[file pathExtension] isEqualToString:@"plist"]) {
         NSString *fullPath = [downloadsPath stringByAppendingPathComponent:file];
         NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:fullPath];
@@ -62,7 +62,6 @@
 }
 
 - (NSArray *)allDownloads {
-  // Sort by name or date if needed, for now just return all
   return [_downloadCache allValues];
 }
 
@@ -86,7 +85,9 @@
   
   NSString *downloadsPath = [self downloadsDirectory];
   NSFileManager *fileManager = [NSFileManager defaultManager];
-  [fileManager createDirectoryAtPath:downloadsPath withIntermediateDirectories:YES attributes:nil error:nil];
+  
+  // TODO: replace with createDirectoryAtPath:withIntermediateDirectories:attributes:error: for 10.5+ / iOS 2.0+
+  [fileManager createDirectoryAtPath:downloadsPath attributes:nil];
   
   NSString *plistName = [[download udid] stringByAppendingPathExtension:@"plist"];
   NSString *fullPath = [downloadsPath stringByAppendingPathComponent:plistName];
@@ -101,9 +102,9 @@
   [list->_downloadCache removeAllObjects];
   
   NSArray *fakeNames = [NSArray arrayWithObjects:@"Debian DVD", @"Lion.jpg", @"Music.mp3", nil];
-  unsigned int i;
-  for (i = 0; i < [fakeNames count]; i++) {
-    NSString *name = [fakeNames objectAtIndex:i];
+  NSEnumerator *e = [fakeNames objectEnumerator];
+  NSString *name;
+  while ((name = [e nextObject])) {
     TDLDownload *download = [list createDownload];
     [download setDisplayName:name];
     
@@ -115,10 +116,12 @@
       [download setContentType:@"application/octet-stream"];
     }
     
+    static int i = 0;
     [download setActualSize:1024 * (i + 1)];
     [download setContentSize:2048 * (i + 1)];
     [download setState:TDLDownloadStateFinished];
     [list saveDownload:download];
+    i++;
   }
 }
 
