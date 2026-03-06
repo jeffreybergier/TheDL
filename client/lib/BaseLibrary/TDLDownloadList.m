@@ -1,5 +1,6 @@
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
+#import "CrossPlatform.h"
 
 @implementation TDLDownloadList
 
@@ -41,7 +42,7 @@
   }
   
   // TODO: replace with contentsOfDirectoryAtPath:error: for 10.5+ / iOS 2.0+
-  NSArray *files = [fileManager directoryContentsAtPath:downloadsPath];
+  NSArray *files = [fileManager XP_contentsOfDirectoryAtPath:downloadsPath error:nil];
   if (files) {
     NSEnumerator *e = [files objectEnumerator];
     NSString *file;
@@ -87,7 +88,10 @@
   NSFileManager *fileManager = [NSFileManager defaultManager];
   
   // TODO: replace with createDirectoryAtPath:withIntermediateDirectories:attributes:error: for 10.5+ / iOS 2.0+
-  [fileManager createDirectoryAtPath:downloadsPath attributes:nil];
+  [fileManager XP_createDirectoryAtPath:downloadsPath 
+            withIntermediateDirectories:YES 
+                             attributes:nil 
+                                  error:nil];
   
   NSString *plistName = [[download udid] stringByAppendingPathExtension:@"plist"];
   NSString *fullPath = [downloadsPath stringByAppendingPathComponent:plistName];

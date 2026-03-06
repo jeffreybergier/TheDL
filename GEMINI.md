@@ -22,6 +22,10 @@
     - **Cross-Platform UI Abstractions:**
         - **Alignment Unification:** Use version-aware macros in `CrossPlatform.h` (e.g., `XPTextAlignmentCenter`) to switch between `NSTextAlignment`, `UITextAlignment`, and `NSCenterTextAlignment` based on the target SDK.
         - **UI Navigation Hierarchy (iOS):** Wrap `UIViewController`s inside `UINavigationController`s, and then put those `UINavigationController`s inside the `UITabBarController` to ensure navigation bars and buttons appear correctly.
+    - **Cross-Platform API Wrappers (The XP_ Category Trick):**
+        - To handle APIs that differ between versions (e.g., `NSFileManager` in 10.4 vs 10.5+), declare a category on the system class in `CrossPlatform.h` (e.g., `@interface NSFileManager (CrossPlatform)`).
+        - Prepend `XP_` to the name of the **MODERN** method (e.g., `-XP_contentsOfDirectoryAtPath:error:`).
+        - In the implementation (`CrossPlatform.m`), use `#if` checks to call the modern API if available, or the legacy equivalent if not. This centralizes version logic and prevents deprecation warnings in the rest of the codebase.
 - Lastly, please always follow the google objective-c style guide which I pasted below for your reference
 
 # Google Objective-C Style Guide

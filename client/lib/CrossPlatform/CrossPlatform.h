@@ -8,7 +8,7 @@
 #import <AppKit/AppKit.h>
 
 // On OS X 10.4 and 10.5, NSApplicationDelegate was not a formal protocol.
-#if defined(__MAC_10_6)
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
 #define XPApplicationDelegate NSApplicationDelegate
 #else
 @protocol XPApplicationDelegate <NSObject>
@@ -41,3 +41,22 @@ typedef NSTextAlignment XPTextAlignment;
 #define XPTextAlignmentRight NSRightTextAlignment
 #endif
 #endif
+
+@interface NSFileManager (CrossPlatform)
+
+/**
+ * Cross-platform wrapper for contentsOfDirectoryAtPath:error:
+ * Falls back to directoryContentsAtPath: on legacy systems.
+ */
+- (NSArray *)XP_contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error;
+
+/**
+ * Cross-platform wrapper for createDirectoryAtPath:withIntermediateDirectories:attributes:error:
+ * Falls back to createDirectoryAtPath:attributes: on legacy systems.
+ */
+- (BOOL)XP_createDirectoryAtPath:(NSString *)path 
+     withIntermediateDirectories:(BOOL)createIntermediates 
+                      attributes:(NSDictionary *)attributes 
+                           error:(NSError **)error;
+
+@end
