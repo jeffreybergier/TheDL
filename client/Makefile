@@ -29,7 +29,6 @@ xp_libs:
 	cp $(XP_DIR)/libXP_iOS.a $(DEBUG_DIR)/
 	cp $(XP_DIR)/libXP_Sim.a $(DEBUG_DIR)/
 	cp $(XP_DIR)/libXP_Mac.a $(DEBUG_DIR)/
-	cp $(XP_DIR)/libXP_Neko.a $(DEBUG_DIR)/
 
 base_libs: xp_libs
 	@echo "Building BaseLibrary libraries..."
@@ -38,7 +37,6 @@ base_libs: xp_libs
 	cp $(BASE_DIR)/libBase_iOS.a $(DEBUG_DIR)/
 	cp $(BASE_DIR)/libBase_Sim.a $(DEBUG_DIR)/
 	cp $(BASE_DIR)/libBase_Mac.a $(DEBUG_DIR)/
-	cp $(BASE_DIR)/libBase_Neko.a $(DEBUG_DIR)/
 
 # --- Delegate Phone App Build ---
 phone_apps: base_libs
@@ -46,6 +44,7 @@ phone_apps: base_libs
 	$(MAKE) -C $(PHONE_DIR) all
 	@mkdir -p $(DEBUG_DIR)
 	cp -R $(PHONE_DIR)/TheDL-Phone.app $(DEBUG_DIR)/
+	cp $(PHONE_DIR)/TheDL.ipa $(DEBUG_DIR)/
 	cp -R $(PHONE_DIR)/TheDL-Sim.app $(DEBUG_DIR)/
 
 # --- Delegate Mac App Build ---
@@ -54,7 +53,6 @@ mac_apps: base_libs
 	$(MAKE) -C $(MAC_DIR) all
 	@mkdir -p $(DEBUG_DIR)
 	cp -R $(MAC_DIR)/TheDL-Mac.app $(DEBUG_DIR)/
-	cp -R $(MAC_DIR)/TheDL-Classic.app $(DEBUG_DIR)/
 
 # --- Debug Build Targets ---
 debug: clean_debug base_libs phone_apps mac_apps
