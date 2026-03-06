@@ -4,8 +4,14 @@
 #if TARGET_OS_IPHONE
 #import <UIKit/UIKit.h>
 #define XPApplicationDelegate UIApplicationDelegate
+#define XPViewController UIViewController
+typedef NSTextAlignment XPTextAlignment;
+#define XPTextAlignmentLeft NSTextAlignmentLeft
+#define XPTextAlignmentCenter NSTextAlignmentCenter
+#define XPTextAlignmentRight NSTextAlignmentRight
 #else
 #import <AppKit/AppKit.h>
+#define XPViewController NSObject
 
 // On OS X 10.4 and 10.5, NSApplicationDelegate was not a formal protocol.
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
@@ -13,6 +19,17 @@
 #else
 @protocol XPApplicationDelegate <NSObject>
 @end
+#endif
+
+typedef NSTextAlignment XPTextAlignment;
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 10110
+#define XPTextAlignmentLeft NSTextAlignmentLeft
+#define XPTextAlignmentCenter NSTextAlignmentCenter
+#define XPTextAlignmentRight NSTextAlignmentRight
+#else
+#define XPTextAlignmentLeft NSLeftTextAlignment
+#define XPTextAlignmentCenter NSCenterTextAlignment
+#define XPTextAlignmentRight NSRightTextAlignment
 #endif
 
 #endif
@@ -24,23 +41,29 @@
  */
 NSString *XPGetPlatformName(void);
 
-#if TARGET_OS_IPHONE
-typedef NSTextAlignment XPTextAlignment;
-#define XPTextAlignmentLeft NSTextAlignmentLeft
-#define XPTextAlignmentCenter NSTextAlignmentCenter
-#define XPTextAlignmentRight NSTextAlignmentRight
-#else
-typedef NSTextAlignment XPTextAlignment;
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 10110
-#define XPTextAlignmentLeft NSTextAlignmentLeft
-#define XPTextAlignmentCenter NSTextAlignmentCenter
-#define XPTextAlignmentRight NSTextAlignmentRight
-#else
-#define XPTextAlignmentLeft NSLeftTextAlignment
-#define XPTextAlignmentCenter NSCenterTextAlignment
-#define XPTextAlignmentRight NSRightTextAlignment
-#endif
-#endif
+/**
+ * A cross-platform video player view controller.
+ * Uses MPMoviePlayerController on iOS 3.1 and AVPlayer on iOS 4.0+.
+ */
+@interface XPPlayerViewController : XPViewController {
+ @private
+  NSURL *_contentURL;
+  id _player;      // MPMoviePlayerController or AVPlayer
+  id _playerLayer; // AVPlayerLayer (iOS 4+)
+}
+
+/**
+ * Initializes the player with a content URL.
+ */
+- (id)initWithContentURL:(NSURL *)url;
+
+/** Starts playback. */
+- (void)play;
+
+/** Stops playback. */
+- (void)stop;
+
+@end
 
 @interface NSFileManager (CrossPlatform)
 

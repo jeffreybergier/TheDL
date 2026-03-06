@@ -1,6 +1,7 @@
 #import "TDLURLConnectionService.h"
 #import "TDLDownload.h"
 #import "TDLDownloadList.h"
+#import "CrossPlatform.h"
 
 @implementation TDLURLConnectionService
 
@@ -36,23 +37,22 @@
 }
 
 - (void)fetchURL:(NSURL *)url {
+  NSLog(@"[TDLURLConnectionService fetchURL:] %@", url);
   NSURLRequest *request = [NSURLRequest requestWithURL:url];
   NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request 
                                                                 delegate:self];
   if (connection) {
-    // Create a live TDLDownload object via the shared list
     TDLDownload *download = [[TDLDownloadList sharedList] createDownload];
     [download setRequestURL:[url absoluteString]];
     [download setServiceIdentifier:[self serviceIdentifier]];
     [download setState:TDLDownloadStateDownloading];
     [download setDisplayName:[[url absoluteString] lastPathComponent]];
     
-    // Set up file path for live data
     NSString *downloadsDir = [[TDLDownloadList sharedList] downloadsDirectory];
-    NSString *dataPath = [downloadsDir stringByAppendingPathComponent:[[download udid] stringByAppendingPathExtension:@"data"]];
+    NSString *dataPath = [downloadsDir stringByAppendingPathComponent:[[download udid] stringByAppendingPathExtension:@"mp4"]];
     [download setFilePath:dataPath];
     
-    // Ensure data file is empty/created
+    // Ensure file exists
     [[NSData data] writeToFile:dataPath atomically:YES];
     
     [[TDLDownloadList sharedList] saveDownload:download];
@@ -64,10 +64,7 @@
 }
 
 - (NSArray *)activeTasks {
-  // Return only tasks belonging to this service that are not finished
   NSMutableArray *tasks = [NSMutableArray array];
-  
-  // TODO: replace with fast enumeration for 10.5+ / iOS 2.0+
   NSEnumerator *e = [_taskList objectEnumerator];
   TDLDownload *download;
   while ((download = [e nextObject])) {
@@ -83,6 +80,7 @@
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
   TDLDownload *download = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
   if (download) {
+    NSLog(@"[TDLURLConnectionService] Received response for %@", [download udid]);
     [download setDisplayName:[response suggestedFilename]];
     [download setContentType:[response MIMEType]];
     [download setContentSize:[response expectedContentLength]];
@@ -94,15 +92,12 @@
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
   TDLDownload *download = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
   if (download) {
-    // Append data to live file
     NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:[download filePath]];
     [handle seekToEndOfFile];
     [handle writeData:data];
     [handle closeFile];
     
     [download setActualSize:[download actualSize] + [data length]];
-    
-    // Optional: Save metadata periodically or every chunk
     [[TDLDownloadList sharedList] saveDownload:download];
   }
 }
@@ -110,6 +105,7 @@
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
   TDLDownload *download = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
   if (download) {
+    NSLog(@"[TDLURLConnectionService] Failed: %@", [error localizedDescription]);
     [download setState:TDLDownloadStateFailed];
     [download setErrorMessage:[error localizedDescription]];
     [[TDLDownloadList sharedList] saveDownload:download];
@@ -120,6 +116,7 @@
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
   TDLDownload *download = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
   if (download) {
+    NSLog(@"[TDLURLConnectionService] Finished: %@", [download udid]);
     [download setState:TDLDownloadStateFinished];
     [[TDLDownloadList sharedList] saveDownload:download];
     [_activeTasks removeObjectForKey:[NSValue valueWithPointer:connection]];

@@ -10,7 +10,6 @@
  @private
   NSArray *_downloads;
   TDLDownload *_selectedDownload;
-  MPMoviePlayerController *_moviePlayer;
 }
 
 
