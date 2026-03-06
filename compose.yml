@@ -5,38 +5,36 @@
 # see Containerfile
 
 # Launch standard Gemini (Fallback):
-# docker compose run --rm gemini
+# docker compose run --rm plain-gemini gemini --yolo
 
 # Launch Cross-Compile Gemini (Current):
-# docker compose run --rm gemini-cross
+# docker compose run --rm xcompile-gemini gemini --yolo
 
 services:
-  # 5. Run Gemini (Original Fallback)
-  gemini:
+  # 1. Run Gemini (Original Fallback)
+  plain-gemini:
     build:
       context: .
       dockerfile: Containerfile
-      target: gemini
-    image: thedl-gemini
+      target: plain-gemini
+    image: plain-gemini
     volumes:
       - .:/app
-      - /app/node_modules
       - ~/.gemini:/root/.gemini
-    command: gemini
+    command: gemini --yolo
     stdin_open: true
     tty: true
 
-  # 6. Run Gemini with Cross-Compilation Tools
-  gemini-cross:
+  # 2. Run Gemini with Cross-Compilation Tools
+  xcompile-gemini:
     build:
       context: .
       dockerfile: Containerfile
-      target: gemini-cross
-    image: thedl-gemini-cross
+      target: xcompile-gemini
+    image: xcompile-gemini
     volumes:
       - .:/app
-      - /app/node_modules
       - ~/.gemini:/root/.gemini
-    command: gemini
+    command: gemini --yolo
     stdin_open: true
     tty: true

@@ -1,5 +1,5 @@
 # --- Phase 1: Build OSXCross Toolchain ---
-FROM ubuntu:22.04 AS osxcross-builder
+FROM ubuntu:22.04 AS xcompile-base
 
 # Prevent interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -49,7 +49,7 @@ RUN mkdir -p target/SDKs && \
     tar -C target/SDKs -xzf tarballs/MacOSX10.6.sdk.tar.gz
 
 # --- Standard Gemini (Original Version / Fallback) ---
-FROM node:20-slim AS gemini
+FROM node:20-slim AS plain-gemini
 EXPOSE 3000
 ENV FORCE_COLOR=1
 RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
@@ -58,7 +58,7 @@ RUN npm install -g @google/gemini-cli
 COPY . .
 
 # --- Gemini with Cross-Compilation Tools ---
-FROM node:20-slim AS gemini-cross
+FROM node:20-slim AS xcompile-gemini
 
 # Install Gemini CLI and Runtime Build Tools
 ENV FORCE_COLOR=1
@@ -78,7 +78,7 @@ RUN apt-get update && apt-get install -y \
 RUN npm install -g @google/gemini-cli
 
 # Copy OSXCross toolchain from builder
-COPY --from=osxcross-builder /osxcross/target /osxcross/target
+COPY --from=xcompile-base /osxcross/target /osxcross/target
 
 # Set up Environment
 ENV PATH="/osxcross/target/bin:${PATH}"
