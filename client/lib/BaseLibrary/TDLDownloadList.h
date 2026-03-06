@@ -45,9 +45,4 @@
  */
 - (void)saveDownload:(TDLDownload *)download;
 
-/**
- * Debug helper to create fake download PLISTs.
- */
-+ (void)__DEBUG_createFakeData;
-
 @end

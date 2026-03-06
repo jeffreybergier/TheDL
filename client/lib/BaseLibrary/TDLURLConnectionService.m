@@ -48,8 +48,15 @@
     [download setState:TDLDownloadStateDownloading];
     [download setDisplayName:[[url absoluteString] lastPathComponent]];
     
+    NSString *host = [url host] ? [url host] : @"unknown";
+    NSString *lastComponent = [url lastPathComponent];
+    if (!lastComponent || [lastComponent length] == 0 || [lastComponent isEqualToString:@"/"]) {
+      lastComponent = @"download.data";
+    }
+    
+    NSString *fileName = [NSString stringWithFormat:@"%@-%@", host, lastComponent];
     NSString *downloadsDir = [[TDLDownloadList sharedList] downloadsDirectory];
-    NSString *dataPath = [downloadsDir stringByAppendingPathComponent:[[download udid] stringByAppendingPathExtension:@"mp4"]];
+    NSString *dataPath = [downloadsDir stringByAppendingPathComponent:fileName];
     [download setFilePath:dataPath];
     
     // Ensure file exists
