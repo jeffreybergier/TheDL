@@ -25,38 +25,29 @@ all: debug test_mac test_ios
 xp_libs:
 	@echo "Building CrossPlatform libraries..."
 	$(MAKE) -C $(XP_DIR) all
-	@mkdir -p $(DEBUG_DIR)
-	cp $(XP_DIR)/libXP_iOS.a $(DEBUG_DIR)/
-	cp $(XP_DIR)/libXP_Sim.a $(DEBUG_DIR)/
-	cp $(XP_DIR)/libXP_Mac.a $(DEBUG_DIR)/
 
 base_libs: xp_libs
 	@echo "Building BaseLibrary libraries..."
 	$(MAKE) -C $(BASE_DIR) all
-	@mkdir -p $(DEBUG_DIR)
-	cp $(BASE_DIR)/libBase_iOS.a $(DEBUG_DIR)/
-	cp $(BASE_DIR)/libBase_Sim.a $(DEBUG_DIR)/
-	cp $(BASE_DIR)/libBase_Mac.a $(DEBUG_DIR)/
 
 # --- Delegate Phone App Build ---
 phone_apps: base_libs
 	@echo "Building Phone applications..."
 	$(MAKE) -C $(PHONE_DIR) all
-	@mkdir -p $(DEBUG_DIR)
-	cp -R $(PHONE_DIR)/TheDL-Phone.app $(DEBUG_DIR)/
-	cp $(PHONE_DIR)/TheDL.ipa $(DEBUG_DIR)/
-	cp -R $(PHONE_DIR)/TheDL-Sim.app $(DEBUG_DIR)/
 
 # --- Delegate Mac App Build ---
 mac_apps: base_libs
 	@echo "Building Mac applications..."
 	$(MAKE) -C $(MAC_DIR) all
-	@mkdir -p $(DEBUG_DIR)
-	cp -R $(MAC_DIR)/TheDL-Mac.app $(DEBUG_DIR)/
 
-# --- Debug Build Targets ---
-debug: clean_debug base_libs phone_apps mac_apps
-	@echo "Debug Build Complete."
+# --- Build Targets ---
+debug: clean_debug
+	$(MAKE) BUILD_CONFIG=debug base_libs phone_apps mac_apps
+	@echo "Debug Build Complete. See $(BUILD_DIR)/debug"
+
+release: clean_release
+	$(MAKE) BUILD_CONFIG=release base_libs phone_apps mac_apps
+	@echo "Release Build Complete. See $(BUILD_DIR)/release"
 
 # --- Testing ---
 test_mac: base_libs

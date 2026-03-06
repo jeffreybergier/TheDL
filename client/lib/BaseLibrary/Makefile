@@ -20,53 +20,63 @@ TEST_SRCS = tests/TDLObjectTests.m tests/TDLDownloadTests.m tests/TDLURLConnecti
 # Build Rules
 .PHONY: all ios sim mac clean test_mac test_sim
 
+ifeq ($(HAS_OSXCROSS), 1)
+all: ios mac
+else
 all: ios sim mac
+endif
 
 test: test_mac test_sim
 
-ios: libBase_iOS.a
-sim: libBase_Sim.a
-mac: libBase_Mac.a
+ios: $(LIB_OUT_DIR)/libBase_iOS.a
+sim: $(LIB_OUT_DIR)/libBase_Sim.a
+mac: $(LIB_OUT_DIR)/libBase_Mac.a
 
-libBase_iOS.a: $(SRCS)
+$(LIB_OUT_DIR)/libBase_iOS.a: $(SRCS)
+	@mkdir -p $(LIB_OUT_DIR)
 	@objs=""; for src in $(SRCS); do \
 		obj=`basename $$src .m`_iOS.o; \
-		$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -g -DDEBUG -c $$src -o $$obj $(LIB_INCLUDES); \
+		$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(CONFIG_FLAGS) -c $$src -o $$obj $(LIB_INCLUDES); \
 		objs="$$objs $$obj"; \
 	done; \
-	libtool -static -o $@ $$objs
+	$(LIBTOOL) -static -o $@ $$objs; \
+	rm -f $$objs
 
-libBase_Sim.a: $(SRCS)
+$(LIB_OUT_DIR)/libBase_Sim.a: $(SRCS)
+	@mkdir -p $(LIB_OUT_DIR)
 	@objs=""; for src in $(SRCS); do \
 		obj=`basename $$src .m`_Sim.o; \
-		$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -g -DDEBUG -c $$src -o $$obj $(LIB_INCLUDES); \
+		$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(CONFIG_FLAGS) -c $$src -o $$obj $(LIB_INCLUDES); \
 		objs="$$objs $$obj"; \
 	done; \
-	libtool -static -o $@ $$objs
+	$(LIBTOOL) -static -o $@ $$objs; \
+	rm -f $$objs
 
-libBase_Mac.a: $(SRCS)
+$(LIB_OUT_DIR)/libBase_Mac.a: $(SRCS)
+	@mkdir -p $(LIB_OUT_DIR)
 	@objs=""; for src in $(SRCS); do \
 		obj=`basename $$src .m`_Mac.o; \
-		$(CC) $(MAC_ARCHS) -isysroot $(MAC_SDK) -mmacosx-version-min=$(MAC_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -g -DDEBUG -c $$src -o $$obj $(LIB_INCLUDES); \
+		$(CC) $(MAC_ARCHS) -isysroot $(MAC_SDK) -mmacosx-version-min=$(MAC_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(CONFIG_FLAGS) -c $$src -o $$obj $(LIB_INCLUDES); \
 		objs="$$objs $$obj"; \
 	done; \
-	libtool -static -o $@ $$objs
+	$(LIBTOOL) -static -o $@ $$objs; \
+	rm -f $$objs
 
 # Tests
-test_mac: libBase_Mac.a
+test_mac: $(LIB_OUT_DIR)/libBase_Mac.a
 	$(CC) $(MAC_ARCHS) -isysroot $(MAC_SDK) -mmacosx-version-min=$(MAC_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) \
 		-framework Foundation -framework CoreData -framework AppKit -framework XCTest \
-		../../mac/tests/test_mac_main.m $(TEST_SRCS) libBase_Mac.a $(XP_DIR)/libXP_Mac.a -o test_mac_runner $(LIB_INCLUDES) \
-		-F$(XCODE_PATH)/Platforms/MacOSX.platform/Developer/Library/Frameworks \
-		-Xlinker -rpath -Xlinker $(XCODE_PATH)/Platforms/MacOSX.platform/Developer/Library/Frameworks
+		../../mac/tests/test_mac_main.m $(TEST_SRCS) $(LIB_OUT_DIR)/libBase_Mac.a $(LIB_OUT_DIR)/libXP_Mac.a -o test_mac_runner $(LIB_INCLUDES) \
+		-F$(XCTEST_FRAMEWORK_DIR_MAC) \
+		-Xlinker -rpath -Xlinker $(XCTEST_FRAMEWORK_DIR_MAC)
 	./test_mac_runner
 
-test_sim: libBase_Sim.a
-	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) -mios-simulator-version-min=$(IOS_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -Wl,-no_pie \
+test_sim: $(LIB_OUT_DIR)/libBase_Sim.a
+	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -Wl,-no_pie \
 		-framework Foundation -framework CoreData -framework UIKit -framework XCTest \
-		../../phone/tests/test_iphone_main.m $(TEST_SRCS) libBase_Sim.a $(XP_DIR)/libXP_Sim.a $(CURL_LIBS) -o test_sim_runner $(LIB_INCLUDES) $(CURL_INC) \
-		-F$(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks \
-		-Xlinker -rpath -Xlinker $(XCODE_PATH)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks
+		../../phone/tests/test_iphone_main.m $(TEST_SRCS) $(LIB_OUT_DIR)/libBase_Sim.a $(LIB_OUT_DIR)/libXP_Sim.a $(CURL_LIBS) -o test_sim_runner $(LIB_INCLUDES) $(CURL_INC) \
+		-F$(XCTEST_FRAMEWORK_DIR_SIM) \
+		-Xlinker -rpath -Xlinker $(XCTEST_FRAMEWORK_DIR_SIM)
 	xcrun simctl spawn booted ./test_sim_runner
 
 clean:

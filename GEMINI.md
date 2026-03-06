@@ -10,6 +10,54 @@
 - You can access this VM by using the config and id_rsa private key in the .ssh folder in the repo
 - Use scp to copy files from the local repo to the mavericks machine before trying to build them. Save them in /Users/me/Desktop/TheDL
 - Does this sound like a fun project?
+
+## Build & Deployment Instructions
+
+### Building (Dual Environment)
+The project uses a unified Makefile system that automatically detects if it's running in the **Docker Cross-Compile Environment** or the **Mavericks VM**.
+
+1.  **Navigate to the client directory:**
+    ```bash
+    cd client
+    ```
+2.  **Build Debug version:**
+    ```bash
+    make debug
+    ```
+3.  **Build Release version:**
+    ```bash
+    make release
+    ```
+
+**Build Output Structure:**
+All artifacts are centralized in the `client/build/` directory:
+- `build/<config>/TheDL-Phone.app`: iOS App Bundle.
+- `build/<config>/TheDL.ipa`: Packaged iOS App.
+- `build/<config>/TheDL-Mac.app`: Mac App Bundle.
+- `build/<config>/lib/`: Custom static libraries (`libBase_*.a`, `libXP_*.a`).
+
+### Deployment to Jailbroken iPhone
+To install the IPA on a jailbroken device (e.g., `ios-six` at `192.168.0.192`):
+
+1.  **Copy the IPA to the device:**
+    ```bash
+    scp -F .ssh/config client/build/debug/TheDL.ipa ios-six:/tmp/TheDL.ipa
+    ```
+2.  **Install using IPAInstaller:**
+    ```bash
+    ssh -F .ssh/config ios-six "ipainstaller /tmp/TheDL.ipa"
+    ```
+3.  **Clean up temporary file:**
+    ```bash
+    ssh -F .ssh/config ios-six "rm /tmp/TheDL.ipa"
+    ```
+
+### Monitoring Logs
+To see the system output and `NSLog` messages while the app is running:
+```bash
+ssh -F .ssh/config ios-six "tail -f /var/log/syslog"
+```
+
 - **Technical Constraints for Legacy Compatibility:**
     - **No Automatic Reference Counting (ARC):** Always use manual retain/release/autorelease.
     - **No Property Syntax:** Do not use `@property` or `@synthesize`. Use manual instance variables and accessor methods instead.
