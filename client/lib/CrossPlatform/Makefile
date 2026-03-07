@@ -7,7 +7,7 @@ CURL_INC = -I$(CURL_DIR)/include
 CURL_LIBS = $(CURL_DIR)/lib/libcurl.a $(CURL_DIR)/lib/libssl.a $(CURL_DIR)/lib/libcrypto.a $(CURL_DIR)/lib/libssh.a $(CURL_DIR)/lib/libz.a
 
 # Source
-SRCS = XPObject.m CrossPlatform.m
+SRCS = XPObject.m CrossPlatform.m XPCURLRequest.m
 TEST_SRCS = tests/XPObjectTests.m
 
 # Build Rules
@@ -66,12 +66,12 @@ test_mac: $(LIB_OUT_DIR)/libXP_Mac.a
 
 test_sim: $(LIB_OUT_DIR)/libXP_Sim.a
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -Wl,-no_pie \
-		-framework Foundation -framework XCTest \
-		../../phone/tests/test_iphone_main.m $(TEST_SRCS) $(LIB_OUT_DIR)/libXP_Sim.a $(CURL_LIBS) -o test_sim_runner -I. $(CURL_INC) \
+		$(SIM_FW) $(TEST_FW) $(TEST_SRCS) \
+		$(LIB_OUT_DIR)/libXP_Sim.a -o test_sim_runner -I. \
 		-F$(XCTEST_FRAMEWORK_DIR_SIM) \
 		-Xlinker -rpath -Xlinker $(XCTEST_FRAMEWORK_DIR_SIM)
-
 	xcrun simctl spawn booted ./test_sim_runner
+
 
 
 clean:

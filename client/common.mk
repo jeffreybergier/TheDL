@@ -90,8 +90,10 @@ WARN_FLAGS = -Wall
 CLANG_WARN_FLAGS = $(WARN_FLAGS) -Wno-error=deprecated-declarations -Wno-unused-command-line-argument
 
 COMMON_FW = -ObjC -framework Foundation -framework CoreData
-IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore
-MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa -framework AVFoundation -framework QuartzCore
+# Defaults: Enabled for iOS device, Disabled for Mac/Sim (due to linker/platform constraints)
+IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=1
+MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=0
+SIM_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=0
 TEST_FW = -framework XCTest
 
 # Standard CFLAGS

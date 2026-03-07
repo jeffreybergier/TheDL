@@ -4,18 +4,24 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/QuartzCore.h>
+#if THEDL_CURL_ENABLED
 #import <curl/curl.h>
 #import <openssl/opensslv.h>
 #import <zlib.h>
+#endif
 #endif
 
 void XPLogLibraryVersions() {
   NSLog(@"--- Library Versions ---");
 #if TARGET_OS_IPHONE
   NSLog(@"[OS] iOS %@", [[UIDevice currentDevice] systemVersion]);
+#if THEDL_CURL_ENABLED
   NSLog(@"[CURL] %s", curl_version());
   NSLog(@"[OpenSSL] %s", OPENSSL_VERSION_TEXT);
   NSLog(@"[zlib] %s", ZLIB_VERSION);
+#else
+  NSLog(@"[CURL] Disabled");
+#endif
 #else
   NSLog(@"[OS] macOS (Legacy)");
 #endif

@@ -2,6 +2,9 @@
 #import "TDLServiceManager.h"
 #import "TDLService.h"
 #import "TDLURLConnectionServiceTableViewController.h"
+#import "TDLCURLRequestServiceTableViewController.h"
+#import "TDLURLConnectionService.h"
+#import "TDLCURLRequestService.h"
 
 @implementation TDLServiceListViewController
 
@@ -45,6 +48,10 @@
   
   if ([[service serviceIdentifier] isEqualToString:@"com.kumasan.thedl.service.urlconnection"]) {
     TDLURLConnectionServiceTableViewController *vc = [[TDLURLConnectionServiceTableViewController alloc] initWithService:(TDLURLConnectionService *)service];
+    [[self navigationController] pushViewController:vc animated:YES];
+    [vc release];
+  } else if ([[service serviceIdentifier] isEqualToString:@"com.kumasan.thedl.service.curl"]) {
+    TDLCURLRequestServiceTableViewController *vc = [[TDLCURLRequestServiceTableViewController alloc] initWithService:(TDLCURLRequestService *)service];
     [[self navigationController] pushViewController:vc animated:YES];
     [vc release];
   }

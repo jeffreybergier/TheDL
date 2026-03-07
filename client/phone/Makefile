@@ -13,7 +13,9 @@ CURL_LIBS = $(CURL_DIR)/lib/libcurl.a $(CURL_DIR)/lib/libssl.a $(CURL_DIR)/lib/l
 # Source
 SRCS = ios_main.m AppDelegate.m RootViewController.m \
         TDLDownloadTableViewController.m TDLServiceListViewController.m \
-        TDLURLConnectionServiceTableViewController.m TDLImageViewController.m
+        TDLURLConnectionServiceTableViewController.m \
+        TDLCURLRequestServiceTableViewController.m \
+        TDLImageViewController.m
 TEST_SRCS = tests/test_iphone_main.m
 
 # Build Rules
@@ -60,15 +62,15 @@ endif
 
 TheDL-Sim.app: $(SRCS)
 	@mkdir -p $@
-	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) -Wl,-no_pie $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(IOS_FW) $(CONFIG_FLAGS) \
-		$(SRCS) $(LIB_OUT_DIR)/libXP_Sim.a $(LIB_OUT_DIR)/libBase_Sim.a $(CURL_LIBS) -o $@/TheDL $(LIB_INCLUDES)
+	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) -Wl,-no_pie $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(SIM_FW) $(CONFIG_FLAGS) \
+		$(SRCS) $(LIB_OUT_DIR)/libXP_Sim.a $(LIB_OUT_DIR)/libBase_Sim.a -o $@/TheDL $(LIB_INCLUDES)
 	cp Info_iOS.plist $@/Info.plist
 
 # Unit Tests for Simulator
 test_sim:
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -Wl,-no_pie \
-		$(IOS_FW) $(TEST_FW) $(TEST_SRCS) \
-		$(LIB_OUT_DIR)/libXP_Sim.a $(LIB_OUT_DIR)/libBase_Sim.a $(CURL_LIBS) -o test_sim_runner $(LIB_INCLUDES) \
+		$(SIM_FW) $(TEST_FW) $(TEST_SRCS) \
+		$(LIB_OUT_DIR)/libXP_Sim.a $(LIB_OUT_DIR)/libBase_Sim.a -o test_sim_runner $(LIB_INCLUDES) \
 		-F$(XCTEST_FRAMEWORK_DIR_SIM) \
 		-Xlinker -rpath -Xlinker $(XCTEST_FRAMEWORK_DIR_SIM)
 	@echo "Running iOS Simulator App Tests..."

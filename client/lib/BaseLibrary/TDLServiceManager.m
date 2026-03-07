@@ -1,5 +1,6 @@
 #import "TDLServiceManager.h"
 #import "TDLURLConnectionService.h"
+#import "TDLCURLRequestService.h"
 
 @implementation TDLServiceManager
 
@@ -14,8 +15,15 @@
 - (id)init {
   self = [super init];
   if (self) {
-    _services = [[NSArray alloc] initWithObjects:
-                 [TDLURLConnectionService sharedService], nil];
+    NSMutableArray *services = [[NSMutableArray alloc] init];
+    [services addObject:[TDLURLConnectionService sharedService]];
+    
+#if THEDL_CURL_ENABLED
+    [services addObject:[TDLCURLRequestService sharedService]];
+#endif
+    
+    _services = [services copy];
+    [services release];
   }
   return self;
 }
