@@ -102,7 +102,6 @@
              [contentType rangeOfString:@"xml"].location != NSNotFound || 
              [contentType rangeOfString:@"json"].location != NSNotFound) {
     TDLTextViewController *textVC = [[TDLTextViewController alloc] initWithDownloadURL:fileURL];
-
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:textVC];
     [self presentModalViewController:nav animated:YES];
     [textVC release];
@@ -134,7 +133,8 @@
   if (cell == nil) {
     cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle 
                                    reuseIdentifier:CellIdentifier] autorelease];
-    [cell setAccessoryType:UITableViewCellAccessoryDetailButton];
+    // DetailDisclosure is the standard for iOS 4-6 for "i" buttons
+    [cell setAccessoryType:UITableViewCellAccessoryDetailDisclosureButton];
   }
   
   NSURL *fileURL = [_downloads objectAtIndex:[indexPath row]];

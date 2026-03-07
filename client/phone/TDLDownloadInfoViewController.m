@@ -1,6 +1,7 @@
 #import "TDLDownloadInfoViewController.h"
 #import "TDLDownload.h"
 #import "TDLDownloadList.h"
+#import "CrossPlatform.h"
 
 @implementation TDLDownloadInfoViewController
 
@@ -100,8 +101,9 @@
       cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault 
                                      reuseIdentifier:DeleteCellID] autorelease];
       [[cell textLabel] setTextColor:[UIColor redColor]];
-      [[cell textLabel] setTextAlignment:NSTextAlignmentCenter];
+      [[cell textLabel] setTextAlignment:XPTextAlignmentCenter];
     }
+
     [[cell textLabel] setText:@"Delete File"];
     return cell;
   }

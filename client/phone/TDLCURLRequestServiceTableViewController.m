@@ -1,6 +1,7 @@
 #import "TDLCURLRequestServiceTableViewController.h"
 #import "TDLCURLRequestService.h"
 #import "TDLDownload.h"
+#import "CrossPlatform.h"
 
 @implementation TDLCURLRequestServiceTableViewController
 
@@ -107,7 +108,7 @@
       if (cell == nil) {
         cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault 
                                        reuseIdentifier:ButtonCellID] autorelease];
-        [[cell textLabel] setTextAlignment:NSTextAlignmentCenter];
+        [[cell textLabel] setTextAlignment:XPTextAlignmentCenter];
       }
       
       [[cell textLabel] setText:@"Download"];

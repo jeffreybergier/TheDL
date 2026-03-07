@@ -96,6 +96,10 @@ CURL_LIBS_SIM = $(CURL_BASE_DIR)/sim/lib/libcurl.a $(CURL_BASE_DIR)/sim/lib/libs
 
 ARC_FLAGS = -fno-objc-arc
 WARN_FLAGS = -Wall
+ifeq ($(HAS_OSXCROSS), 1)
+  # Modern Clang supports this
+  WARN_FLAGS += -Wunguarded-availability
+endif
 CLANG_WARN_FLAGS = $(WARN_FLAGS) -Wno-error=deprecated-declarations -Wno-unused-command-line-argument
 
 COMMON_FW = -ObjC -framework Foundation -framework CoreData

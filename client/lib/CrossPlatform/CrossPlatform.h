@@ -5,10 +5,12 @@
 #import <UIKit/UIKit.h>
 #define XPApplicationDelegate UIApplicationDelegate
 #define XPViewController UIViewController
+
 typedef NSTextAlignment XPTextAlignment;
 #define XPTextAlignmentLeft NSTextAlignmentLeft
 #define XPTextAlignmentCenter NSTextAlignmentCenter
 #define XPTextAlignmentRight NSTextAlignmentRight
+
 #else
 #import <AppKit/AppKit.h>
 #define XPViewController NSObject
@@ -20,16 +22,11 @@ typedef NSTextAlignment XPTextAlignment;
 @end
 #endif
 
+// TODO: Fix this on iOS 5 and lower
 typedef NSTextAlignment XPTextAlignment;
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 10110
 #define XPTextAlignmentLeft NSTextAlignmentLeft
 #define XPTextAlignmentCenter NSTextAlignmentCenter
 #define XPTextAlignmentRight NSTextAlignmentRight
-#else
-#define XPTextAlignmentLeft NSLeftTextAlignment
-#define XPTextAlignmentCenter NSCenterTextAlignment
-#define XPTextAlignmentRight NSRightTextAlignment
-#endif
 
 #endif
 
