@@ -3,12 +3,9 @@ include ../../common.mk
 
 # Source Directories
 XP_DIR = ../CrossPlatform
-CURL_DIR = ../CURL/ios
-CURL_INC = -I$(CURL_DIR)/include
-CURL_LIBS = $(CURL_DIR)/lib/libcurl.a $(CURL_DIR)/lib/libssl.a $(CURL_DIR)/lib/libcrypto.a $(CURL_DIR)/lib/libssh.a $(CURL_DIR)/lib/libz.a
 
 # Helper for Library Inclusion
-LIB_INCLUDES = -I. -I$(XP_DIR)
+LIB_INCLUDES = -I. -I$(XP_DIR) $(CURL_INC)
 
 # Source
 SRCS = TDLObject.m TDLDownload.m TDLDownloadList.m \
@@ -66,7 +63,7 @@ $(LIB_OUT_DIR)/libBase_Mac.a: $(SRCS)
 test_mac: $(LIB_OUT_DIR)/libBase_Mac.a
 	$(CC) $(MAC_ARCHS) -isysroot $(MAC_SDK) -mmacosx-version-min=$(MAC_MIN) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) \
 		-framework Foundation -framework CoreData -framework AppKit -framework XCTest \
-		../../mac/tests/test_mac_main.m $(TEST_SRCS) $(LIB_OUT_DIR)/libBase_Mac.a $(LIB_OUT_DIR)/libXP_Mac.a -o test_mac_runner $(LIB_INCLUDES) \
+		../../mac/tests/test_mac_main.m $(TEST_SRCS) $(LIB_OUT_DIR)/libBase_Mac.a $(LIB_OUT_DIR)/libXP_Mac.a $(CURL_LIBS_MAC) -o test_mac_runner $(LIB_INCLUDES) \
 		-F$(XCTEST_FRAMEWORK_DIR_MAC) \
 		-Xlinker -rpath -Xlinker $(XCTEST_FRAMEWORK_DIR_MAC)
 	./test_mac_runner
@@ -74,7 +71,7 @@ test_mac: $(LIB_OUT_DIR)/libBase_Mac.a
 test_sim: $(LIB_OUT_DIR)/libBase_Sim.a
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -Wl,-no_pie \
 		$(SIM_FW) $(TEST_FW) $(TEST_SRCS) \
-		$(LIB_OUT_DIR)/libBase_Sim.a $(LIB_OUT_DIR)/libXP_Sim.a -o test_sim_runner $(LIB_INCLUDES) \
+		$(LIB_OUT_DIR)/libBase_Sim.a $(LIB_OUT_DIR)/libXP_Sim.a $(CURL_LIBS_SIM) -o test_sim_runner $(LIB_INCLUDES) \
 		-F$(XCTEST_FRAMEWORK_DIR_SIM) \
 		-Xlinker -rpath -Xlinker $(XCTEST_FRAMEWORK_DIR_SIM)
 	xcrun simctl spawn booted ./test_sim_runner

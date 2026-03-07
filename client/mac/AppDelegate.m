@@ -1,4 +1,5 @@
 #import "AppDelegate.h"
+#import "CrossPlatform.h"
 
 @implementation AppDelegate
 
@@ -15,6 +16,7 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
   NSLog(@"[AppDelegate applicationDidFinishLaunching:] Started TheDL on macOS.");
+  XPLogLibraryVersions();
 
   NSRect frame = NSMakeRect(0, 0, 480, 320);
   unsigned int styleMask = NSTitledWindowMask | NSClosableWindowMask |

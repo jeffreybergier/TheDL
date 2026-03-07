@@ -4,11 +4,9 @@ include ../common.mk
 # Paths
 XP_DIR = ../lib/CrossPlatform
 BASE_DIR = ../lib/BaseLibrary
-CURL_DIR = ../lib/CURL/ios
 
 # Helper for Library Inclusion
-LIB_INCLUDES = -I. -I$(XP_DIR) -I$(BASE_DIR) -I$(CURL_DIR)/include
-CURL_LIBS = $(CURL_DIR)/lib/libcurl.a $(CURL_DIR)/lib/libssl.a $(CURL_DIR)/lib/libcrypto.a $(CURL_DIR)/lib/libssh.a $(CURL_DIR)/lib/libz.a
+LIB_INCLUDES = -I. -I$(XP_DIR) -I$(BASE_DIR) $(CURL_INC)
 
 # Source
 SRCS = ios_main.m AppDelegate.m RootViewController.m \
@@ -36,7 +34,7 @@ phone: TheDL-Phone.app
 TheDL-Phone.app: $(SRCS)
 	@mkdir -p $@
 	$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=$(IOS_MIN) -Wl,-no_pie $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(IOS_FW) $(CONFIG_FLAGS) \
-		$(SRCS) $(LIB_OUT_DIR)/libXP_iOS.a $(LIB_OUT_DIR)/libBase_iOS.a $(CURL_LIBS) -o $@/TheDL $(LIB_INCLUDES)
+		$(SRCS) $(LIB_OUT_DIR)/libXP_iOS.a $(LIB_OUT_DIR)/libBase_iOS.a $(CURL_LIBS_IOS) -o $@/TheDL $(LIB_INCLUDES)
 	cp Info_iOS.plist $@/Info.plist
 
 # Packaging for Physical Device
@@ -63,14 +61,14 @@ endif
 TheDL-Sim.app: $(SRCS)
 	@mkdir -p $@
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) -Wl,-no_pie $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(SIM_FW) $(CONFIG_FLAGS) \
-		$(SRCS) $(LIB_OUT_DIR)/libXP_Sim.a $(LIB_OUT_DIR)/libBase_Sim.a -o $@/TheDL $(LIB_INCLUDES)
+		$(SRCS) $(LIB_OUT_DIR)/libXP_Sim.a $(LIB_OUT_DIR)/libBase_Sim.a $(CURL_LIBS_SIM) -o $@/TheDL $(LIB_INCLUDES)
 	cp Info_iOS.plist $@/Info.plist
 
 # Unit Tests for Simulator
 test_sim:
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) -Wl,-no_pie \
 		$(SIM_FW) $(TEST_FW) $(TEST_SRCS) \
-		$(LIB_OUT_DIR)/libXP_Sim.a $(LIB_OUT_DIR)/libBase_Sim.a -o test_sim_runner $(LIB_INCLUDES) \
+		$(LIB_OUT_DIR)/libXP_Sim.a $(LIB_OUT_DIR)/libBase_Sim.a $(CURL_LIBS_SIM) -o test_sim_runner $(LIB_INCLUDES) \
 		-F$(XCTEST_FRAMEWORK_DIR_SIM) \
 		-Xlinker -rpath -Xlinker $(XCTEST_FRAMEWORK_DIR_SIM)
 	@echo "Running iOS Simulator App Tests..."

@@ -83,6 +83,14 @@ else
   CONFIG_FLAGS = -g -DDEBUG
 endif
 
+# --- Library Paths (Pre-built CURL/OpenSSL/zlib) ---
+CURL_BASE_DIR = $(ROOT_DIR)/lib/CURL/build
+CURL_INC = -I$(CURL_BASE_DIR)/include
+
+CURL_LIBS_IOS = $(CURL_BASE_DIR)/ios/lib/libcurl.a $(CURL_BASE_DIR)/ios/lib/libssl.a $(CURL_BASE_DIR)/ios/lib/libcrypto.a $(CURL_BASE_DIR)/ios/lib/libz.a
+CURL_LIBS_MAC = $(CURL_BASE_DIR)/mac/lib/libcurl.a $(CURL_BASE_DIR)/mac/lib/libssl.a $(CURL_BASE_DIR)/mac/lib/libcrypto.a $(CURL_BASE_DIR)/mac/lib/libz.a
+CURL_LIBS_SIM = $(CURL_BASE_DIR)/sim/lib/libcurl.a $(CURL_BASE_DIR)/sim/lib/libssl.a $(CURL_BASE_DIR)/sim/lib/libcrypto.a $(CURL_BASE_DIR)/sim/lib/libz.a
+
 # --- Shared Flags ---
 
 ARC_FLAGS = -fno-objc-arc
@@ -90,14 +98,11 @@ WARN_FLAGS = -Wall
 CLANG_WARN_FLAGS = $(WARN_FLAGS) -Wno-error=deprecated-declarations -Wno-unused-command-line-argument
 
 COMMON_FW = -ObjC -framework Foundation -framework CoreData
-# Defaults: Enabled for iOS device, Disabled for Mac/Sim (due to linker/platform constraints)
+# Defaults: Enabled for iOS device and Mac, Disabled for Sim (until Phase 4)
 IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=1
-MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=0
+MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=1
 SIM_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=0
 TEST_FW = -framework XCTest
 
 # Standard CFLAGS
 CFLAGS = $(CLANG_WARN_FLAGS)
-
-# --- Library Paths (Pre-built) ---
-CURL_DIR_IOS = $(ROOT_DIR)/lib/CURL/ios
