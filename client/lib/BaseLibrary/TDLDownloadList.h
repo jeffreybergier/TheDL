@@ -4,11 +4,9 @@
 
 /**
  * A central manager for all downloads (in-progress and completed).
+ * Metadata is stored in the file's resource fork.
  */
-@interface TDLDownloadList : NSObject {
- @private
-  NSMutableDictionary *_downloadCache; // udid -> TDLDownload (optional cache)
-}
+@interface TDLDownloadList : NSObject
 
 /** Returns the shared singleton instance. */
 + (TDLDownloadList *)sharedList;
@@ -20,41 +18,31 @@
 - (NSString *)downloadsDirectory;
 
 /**
- * Returns all download metadata URLs (.plist files) sorted by modification date.
+ * Returns all download file URLs in the downloads directory sorted by modification date.
  *
  * @return An NSArray of NSURL objects.
  */
 - (NSArray *)allDownloads;
 
 /**
- * Loads and returns a TDLDownload object from a metadata URL.
+ * Loads and returns a TDLDownload metadata object from a file's resource fork.
  *
- * @param url The URL to the .plist file.
- * @return A TDLDownload object, or nil if loading fails.
+ * @param url The URL to the data file.
+ * @return A TDLDownload object, or nil if no metadata exists.
  */
 - (TDLDownload *)getTDLDownloadForURL:(NSURL *)url;
 
 /**
- * Loads and returns the raw data associated with a metadata URL.
- *
- * @param url The URL to the .plist file.
- * @return The NSData of the downloaded file, or nil if not found.
+ * Persists a download object's metadata to a file's resource fork.
+ * 
+ * @param download The metadata to save.
+ * @param url The URL of the file to attach metadata to.
  */
-- (NSData *)getDataForURL:(NSURL *)url;
+- (void)saveDownload:(TDLDownload *)download forURL:(NSURL *)url;
 
 /**
- * Creates and registers a new download object.
+ * Deletes a file and its integrated metadata from disk.
  */
-- (TDLDownload *)createDownload;
-
-/**
- * Persists a download object's metadata to disk.
- */
-- (void)saveDownload:(TDLDownload *)download;
-
-/**
- * Deletes a download object and its files from disk.
- */
-- (void)deleteDownload:(TDLDownload *)download;
+- (void)deleteFileAtURL:(NSURL *)url;
 
 @end

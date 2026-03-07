@@ -3,17 +3,17 @@
 
 @implementation TDLTextViewController
 
-- (id)initWithDownload:(TDLDownload *)download {
+- (id)initWithDownloadURL:(NSURL *)url {
   self = [super init];
   if (self) {
-    _download = [download retain];
-    [self setTitle:[_download displayName]];
+    _downloadURL = [url retain];
+    [self setTitle:[_downloadURL lastPathComponent]];
   }
   return self;
 }
 
 - (void)dealloc {
-  [_download release];
+  [_downloadURL release];
   [_textView release];
   [super dealloc];
 }
@@ -43,7 +43,7 @@
 
 - (void)loadText {
   NSError *error = nil;
-  NSString *content = [NSString stringWithContentsOfFile:[_download filePath] 
+  NSString *content = [NSString stringWithContentsOfFile:[_downloadURL path] 
                                                 encoding:NSUTF8StringEncoding 
                                                    error:&error];
   if (content) {

@@ -4,17 +4,17 @@
 
 @implementation TDLImageViewController
 
-- (id)initWithDownload:(TDLDownload *)download {
+- (id)initWithDownloadURL:(NSURL *)url {
   self = [super init];
   if (self) {
-    _download = [download retain];
-    [self setTitle:[_download displayName]];
+    _downloadURL = [url retain];
+    [self setTitle:[_downloadURL lastPathComponent]];
   }
   return self;
 }
 
 - (void)dealloc {
-  [_download release];
+  [_downloadURL release];
   [_scrollView release];
   [_imageView release];
   [super dealloc];
@@ -22,77 +22,65 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
+  NSLog(@"[TDLImageViewController viewDidLoad]");
+
   [[self view] setBackgroundColor:[UIColor whiteColor]];
-  
-  UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] 
-                                  initWithBarButtonSystemItem:UIBarButtonSystemItemDone 
-                                  target:self 
-                                  action:@selector(dismiss)];
-  [[self navigationItem] setLeftBarButtonItem:doneButton];
-  [doneButton release];
-  
+
   _scrollView = [[UIScrollView alloc] initWithFrame:[[self view] bounds]];
   [_scrollView setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
-  [_scrollView setBackgroundColor:[UIColor whiteColor]];
   [_scrollView setDelegate:self];
   [_scrollView setMinimumZoomScale:1.0];
   [_scrollView setMaximumZoomScale:5.0];
-  [_scrollView setShowsVerticalScrollIndicator:NO];
   [_scrollView setShowsHorizontalScrollIndicator:NO];
-  
-  UIImage *image = [UIImage imageWithContentsOfFile:[_download filePath]];
-  if (image) {
-    _imageView = [[UIImageView alloc] initWithImage:image];
-    [_imageView setUserInteractionEnabled:YES];
-    [_imageView setFrame:CGRectMake(0, 0, image.size.width, image.size.height)];
-    [_scrollView setContentSize:[image size]];
-    [_scrollView addSubview:_imageView];
-    
-    // Fit the image to the screen initially
-    CGFloat widthScale = [[self view] bounds].size.width / [image size].width;
-    CGFloat heightScale = [[self view] bounds].size.height / [image size].height;
-    CGFloat minScale = widthScale < heightScale ? widthScale : heightScale;
-    
-    [_scrollView setMinimumZoomScale:minScale];
-    [_scrollView setZoomScale:minScale];
-    
-    // Center the image initially
-    [self scrollViewDidZoom:_scrollView];
-    
-    // Double tap to zoom
-    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] 
-                                         initWithTarget:self 
-                                         action:@selector(handleDoubleTap:)];
-    [doubleTap setNumberOfTapsRequired:2];
-    [_imageView addGestureRecognizer:doubleTap];
-    [doubleTap release];
-  } else {
-    NSLog(@"[TDLImageViewController viewDidLoad] Failed to load image at: %@", [_download filePath]);
-    
-    UILabel *errorLabel = [[UILabel alloc] initWithFrame:[[self view] bounds]];
-    [errorLabel setText:@"Failed to load image"];
-    [errorLabel setTextAlignment:XPTextAlignmentCenter];
-    [errorLabel setBackgroundColor:[UIColor whiteColor]];
-    [[self view] addSubview:errorLabel];
-    [errorLabel release];
-  }
-  
+  [_scrollView setShowsVerticalScrollIndicator:NO];
+  [_scrollView setBackgroundColor:[UIColor whiteColor]];
   [[self view] addSubview:_scrollView];
+
+  // Load image from URL
+  UIImage *image = [UIImage imageWithContentsOfFile:[_downloadURL path]];
+  _imageView = [[UIImageView alloc] initWithImage:image];
+  [_scrollView addSubview:_imageView];
+  [_scrollView setContentSize:[image size]];
+
+  UIBarButtonItem *doneButton = [[UIBarButtonItem alloc]
+                                  initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                  target:self
+                                  action:@selector(dismiss)];
+  [[self navigationItem] setRightBarButtonItem:doneButton];
+  [doneButton release];
+
+  UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc]
+                                        initWithTarget:self
+                                        action:@selector(handleDoubleTap:)];
+  [doubleTap setNumberOfTapsRequired:2];
+  [_scrollView addGestureRecognizer:doubleTap];
+  [doubleTap release];
+  
+  // Center initially
+  [self scrollViewDidZoom:_scrollView];
 }
 
 - (void)dismiss {
   [self dismissModalViewControllerAnimated:YES];
 }
 
-- (void)handleDoubleTap:(UIGestureRecognizer *)gesture {
-  if ([_scrollView zoomScale] > [_scrollView minimumZoomScale]) {
-    [_scrollView setZoomScale:[_scrollView minimumZoomScale] animated:YES];
+- (void)handleDoubleTap:(UITapGestureRecognizer *)gesture {
+  if ([_scrollView zoomScale] > 1.0) {
+    [_scrollView setZoomScale:1.0 animated:YES];
   } else {
-    // Zoom into the point tapped
-    CGPoint tapPoint = [gesture locationInView:_imageView];
-    CGRect zoomRect = CGRectMake(tapPoint.x - 50, tapPoint.y - 50, 100, 100);
+    CGPoint point = [gesture locationInView:_imageView];
+    CGRect zoomRect = [self zoomRectForScale:2.0 withCenter:point];
     [_scrollView zoomToRect:zoomRect animated:YES];
   }
+}
+
+- (CGRect)zoomRectForScale:(float)scale withCenter:(CGPoint)center {
+  CGRect zoomRect;
+  zoomRect.size.height = [_scrollView frame].size.height / scale;
+  zoomRect.size.width  = [_scrollView frame].size.width  / scale;
+  zoomRect.origin.x    = center.x - (zoomRect.size.width  / 2.0);
+  zoomRect.origin.y    = center.y - (zoomRect.size.height / 2.0);
+  return zoomRect;
 }
 
 #pragma mark - UIScrollViewDelegate
@@ -102,7 +90,6 @@
 }
 
 - (void)scrollViewDidZoom:(UIScrollView *)scrollView {
-  // Center the image as it zooms
   CGSize boundsSize = [scrollView bounds].size;
   CGRect contentsFrame = [_imageView frame];
   

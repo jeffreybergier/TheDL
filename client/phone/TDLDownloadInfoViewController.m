@@ -4,21 +4,23 @@
 
 @implementation TDLDownloadInfoViewController
 
-- (id)initWithDownload:(TDLDownload *)download {
+- (id)initWithMetadata:(TDLDownload *)metadata fileURL:(NSURL *)url {
   self = [super initWithStyle:UITableViewStyleGrouped];
   if (self) {
-    _download = [download retain];
+    _metadata = [metadata retain];
+    _fileURL = [url retain];
     [self setTitle:@"Download Info"];
     
     // Extract metadata for display
-    _data = [[_download dictionaryRepresentation] retain];
+    _data = [[_metadata dictionaryRepresentation] retain];
     _keys = [[[_data allKeys] sortedArrayUsingSelector:@selector(compare:)] retain];
   }
   return self;
 }
 
 - (void)dealloc {
-  [_download release];
+  [_metadata release];
+  [_fileURL release];
   [_keys release];
   [_data release];
   [super dealloc];
@@ -43,7 +45,7 @@
   UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:@"Are you sure?" 
                                                      delegate:(id<UIActionSheetDelegate>)self 
                                             cancelButtonTitle:@"Cancel" 
-                                       destructiveButtonTitle:@"Delete Download" 
+                                       destructiveButtonTitle:@"Delete File" 
                                             otherButtonTitles:nil];
   [sheet showInView:[self view]];
   [sheet release];
@@ -53,7 +55,7 @@
 
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
   if (buttonIndex == [actionSheet destructiveButtonIndex]) {
-    [[TDLDownloadList sharedList] deleteDownload:_download];
+    [[TDLDownloadList sharedList] deleteFileAtURL:_fileURL];
     [self dismiss];
   }
 }
@@ -100,7 +102,7 @@
       [[cell textLabel] setTextColor:[UIColor redColor]];
       [[cell textLabel] setTextAlignment:NSTextAlignmentCenter];
     }
-    [[cell textLabel] setText:@"Delete Download"];
+    [[cell textLabel] setText:@"Delete File"];
     return cell;
   }
 }

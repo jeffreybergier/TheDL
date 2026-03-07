@@ -40,21 +40,26 @@
 #if THEDL_CURL_ENABLED
   NSLog(@"[TDLCURLRequestService fetchURL:] %@", url);
   
-  TDLDownload *download = [[TDLDownloadList sharedList] createDownload];
-  [download setRequestURL:[url absoluteString]];
-  [download setServiceIdentifier:[self serviceIdentifier]];
-  [download setState:TDLDownloadStateDownloading];
-  [download setDisplayName:[[url path] lastPathComponent]];
+  TDLDownload *metadata = [[TDLDownload alloc] init];
+  [metadata setRequestURL:[url absoluteString]];
+  [metadata setServiceIdentifier:[self serviceIdentifier]];
+  [metadata setState:TDLDownloadStateDownloading];
   
-  NSString *extension = [[url path] pathExtension];
-  if (!extension || [extension length] == 0) {
-    extension = @"data";
+  NSString *lastComponent = [[url path] lastPathComponent];
+  if (!lastComponent || [lastComponent length] == 0) {
+    lastComponent = @"download.data";
   }
   
-  NSString *fileName = [[download udid] stringByAppendingPathExtension:extension];
-  NSString *downloadsDir = [[TDLDownloadList sharedList] downloadsDirectory];
-  NSString *dataPath = [downloadsDir stringByAppendingPathComponent:fileName];
-  [download setFilePath:dataPath];
+  NSString *downloadsDir = [TDLDownloadList downloadsDirectory];
+  NSString *dataPath = [downloadsDir stringByAppendingPathComponent:lastComponent];
+  
+  // Deduplicate
+  if ([[NSFileManager defaultManager] fileExistsAtPath:dataPath]) {
+    NSString *timestamp = [NSString stringWithFormat:@"-%ld", (long)[[NSDate date] timeIntervalSince1970]];
+    NSString *base = [lastComponent stringByDeletingPathExtension];
+    NSString *ext = [lastComponent pathExtension];
+    dataPath = [downloadsDir stringByAppendingPathComponent:[[base stringByAppendingString:timestamp] stringByAppendingPathExtension:ext]];
+  }
   
   // Ensure directory exists
   [[NSFileManager defaultManager] createDirectoryAtPath:downloadsDir 
@@ -62,24 +67,36 @@
                                              attributes:nil 
                                                   error:NULL];
   
-  [[TDLDownloadList sharedList] saveDownload:download];
-  [_taskList addObject:download];
+  // Create empty file so we have a target
+  [[NSData data] writeToFile:dataPath atomically:YES];
+  
+  NSURL *fileURL = [NSURL fileURLWithPath:dataPath];
+  [_taskList addObject:fileURL];
 
   // Perform CURL request on a background thread
-  [NSThread detachNewThreadSelector:@selector(performFetchForDownload:) 
+  // We pass a dictionary with metadata and fileURL
+  NSDictionary *info = [NSDictionary dictionaryWithObjectsAndKeys:
+                        metadata, @"metadata",
+                        fileURL, @"fileURL", nil];
+  [metadata release];
+
+  [NSThread detachNewThreadSelector:@selector(performFetchWithInfo:) 
                            toTarget:self 
-                         withObject:download];
+                         withObject:info];
 #else
   NSLog(@"[TDLCURLRequestService] CURL is disabled for this target. Cannot fetch: %@", url);
 #endif
 }
 
 #if THEDL_CURL_ENABLED
-- (void)performFetchForDownload:(TDLDownload *)download {
+- (void)performFetchWithInfo:(NSDictionary *)info {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
+  TDLDownload *metadata = [info objectForKey:@"metadata"];
+  NSURL *fileURL = [info objectForKey:@"fileURL"];
+  
   NSError *error = nil;
-  NSURL *url = [NSURL URLWithString:[download requestURL]];
+  NSURL *url = [NSURL URLWithString:[metadata requestURL]];
   NSDictionary *responseHeaders = nil;
   
   NSData *responseData = [XPCURLRequest performRequestWithURL:url
@@ -91,49 +108,41 @@
   
   if (error) {
     NSLog(@"[TDLCURLRequestService] Failed: %@", [error localizedDescription]);
-    [download setState:TDLDownloadStateFailed];
-    [download setErrorMessage:[error localizedDescription]];
+    [metadata setState:TDLDownloadStateFailed];
+    [metadata setErrorMessage:[error localizedDescription]];
+    [[TDLDownloadList sharedList] saveDownload:metadata forURL:fileURL];
   } else {
-    NSLog(@"[TDLCURLRequestService] Finished: %@", [download udid]);
+    NSLog(@"[TDLCURLRequestService] Finished: %@", [fileURL lastPathComponent]);
     
     // Save data
-    BOOL success = [responseData writeToFile:[download filePath] atomically:YES];
+    BOOL success = [responseData writeToURL:fileURL atomically:YES];
     if (!success) {
-      NSLog(@"[TDLCURLRequestService] ERROR: Could not write data to path: %@", [download filePath]);
+      NSLog(@"[TDLCURLRequestService] ERROR: Could not write data to path: %@", [fileURL path]);
     }
     
     // Set metadata from headers
     NSString *contentType = [responseHeaders objectForKey:@"Content-Type"];
     if (contentType) {
-      // Strip charset if present
       NSRange semicolonRange = [contentType rangeOfString:@";"];
       if (semicolonRange.location != NSNotFound) {
         contentType = [contentType substringToIndex:semicolonRange.location];
       }
-      [download setContentType:contentType];
+      [metadata setContentType:contentType];
     }
     
-    [download setActualSize:[responseData length]];
-    [download setContentSize:[responseData length]];
-    [download setState:TDLDownloadStateFinished];
+    [metadata setContentSize:[responseData length]];
+    [metadata setState:TDLDownloadStateFinished];
+    
+    // SAVE TO RESOURCE FORK
+    [[TDLDownloadList sharedList] saveDownload:metadata forURL:fileURL];
   }
-  
-  [[TDLDownloadList sharedList] saveDownload:download];
   
   [pool drain];
 }
 #endif
 
 - (NSArray *)activeTasks {
-  NSMutableArray *tasks = [NSMutableArray array];
-  NSEnumerator *e = [_taskList objectEnumerator];
-  TDLDownload *download;
-  while ((download = [e nextObject])) {
-    if ([download state] == TDLDownloadStateDownloading || [download state] == TDLDownloadStateFailed) {
-      [tasks addObject:download];
-    }
-  }
-  return tasks;
+  return [NSArray array];
 }
 
 @end

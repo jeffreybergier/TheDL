@@ -1,19 +1,17 @@
 #import <UIKit/UIKit.h>
 
-@class TDLDownload;
-
 /**
  * A simple view controller to display plain text content from a download.
  */
 @interface TDLTextViewController : UIViewController {
  @private
-  TDLDownload *_download;
+  NSURL *_downloadURL;
   UITextView *_textView;
 }
 
 /**
- * Initializes with a download object.
+ * Initializes with a download URL.
  */
-- (id)initWithDownload:(TDLDownload *)download;
+- (id)initWithDownloadURL:(NSURL *)url;
 
 @end

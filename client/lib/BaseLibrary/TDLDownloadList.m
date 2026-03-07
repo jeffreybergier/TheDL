@@ -14,15 +14,7 @@
 
 - (id)init {
   self = [super init];
-  if (self) {
-    _downloadCache = [[NSMutableDictionary alloc] init];
-  }
   return self;
-}
-
-- (void)dealloc {
-  [_downloadCache release];
-  [super dealloc];
 }
 
 + (NSString *)downloadsDirectory {
@@ -37,110 +29,79 @@
 
 - (NSArray *)allDownloads {
   NSString *downloadsPath = [TDLDownloadList downloadsDirectory];
+  NSURL *downloadsURL = [NSURL fileURLWithPath:downloadsPath];
   NSFileManager *fileManager = [NSFileManager defaultManager];
   
-  BOOL isDir = NO;
-  if (![fileManager fileExistsAtPath:downloadsPath isDirectory:&isDir] || !isDir) {
+  // Pre-fetch modification date and file size for performance
+  NSArray *keys = [NSArray arrayWithObjects:NSURLContentModificationDateKey, NSURLFileSizeKey, nil];
+  
+  NSError *error = nil;
+  NSArray *files = [fileManager contentsOfDirectoryAtURL:downloadsURL 
+                              includingPropertiesForKeys:keys 
+                                                 options:NSDirectoryEnumerationSkipsHiddenFiles 
+                                                   error:&error];
+  
+  if (!files) {
+    NSLog(@"[TDLDownloadList] ERROR: Could not enumerate directory: %@", [error localizedDescription]);
     return [NSArray array];
   }
   
-  NSArray *files = [fileManager contentsOfDirectoryAtPath:downloadsPath error:nil];
-  if (!files) return [NSArray array];
-  
-  NSMutableArray *plistUrls = [NSMutableArray array];
-  NSEnumerator *e = [files objectEnumerator];
-  NSString *file;
-  while ((file = [e nextObject])) {
-    if ([[file pathExtension] isEqualToString:@"plist"]) {
-      NSURL *url = [NSURL fileURLWithPath:[downloadsPath stringByAppendingPathComponent:file]];
-      [plistUrls addObject:url];
-    }
-  }
-  
-  // Sort by modification date
-  [plistUrls sortUsingComparator:^NSComparisonResult(id obj1, id obj2) {
-    NSURL *url1 = (NSURL *)obj1;
-    NSURL *url2 = (NSURL *)obj2;
+  // Sort using the pre-fetched modification date
+  NSArray *sortedFiles = [files sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+    NSDate *date1, *date2;
+    [obj1 getResourceValue:&date1 forKey:NSURLContentModificationDateKey error:nil];
+    [obj2 getResourceValue:&date2 forKey:NSURLContentModificationDateKey error:nil];
     
-    NSDictionary *attr1 = [[NSFileManager defaultManager] attributesOfItemAtPath:[url1 path] error:nil];
-    NSDictionary *attr2 = [[NSFileManager defaultManager] attributesOfItemAtPath:[url2 path] error:nil];
-    
-    NSDate *date1 = [attr1 fileModificationDate];
-    NSDate *date2 = [attr2 fileModificationDate];
-    
-    // Decending order (newest first)
+    // Newest first
     return [date2 compare:date1];
   }];
   
-  return plistUrls;
+  return sortedFiles;
 }
 
 - (TDLDownload *)getTDLDownloadForURL:(NSURL *)url {
   if (!url) return nil;
   
-  NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:[url path]];
+  // Retro Trick: Access the resource fork via the ..namedfork/rsrc path
+  NSString *resourcePath = [[url path] stringByAppendingPathComponent:@"..namedfork/rsrc"];
+  
+  NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:resourcePath];
   if (dict) {
     return [[[TDLDownload alloc] initWithDictionary:dict] autorelease];
   }
-  return nil;
+  
+  // Fallback: Check if it's a valid download but has no metadata yet
+  return [[[TDLDownload alloc] init] autorelease];
 }
 
-- (NSData *)getDataForURL:(NSURL *)url {
-  TDLDownload *download = [self getTDLDownloadForURL:url];
-  if (download && [download filePath]) {
-    return [NSData dataWithContentsOfFile:[download filePath]];
+- (void)saveDownload:(TDLDownload *)download forURL:(NSURL *)url {
+  if (!download || !url) return;
+  
+  // Retro Trick: Access the resource fork via the ..namedfork/rsrc path
+  NSString *resourcePath = [[url path] stringByAppendingPathComponent:@"..namedfork/rsrc"];
+  
+  // Note: writeToFile:atomically: YES fails on named forks because it can't rename a temp file into a fork.
+  // We must use NSData's non-atomic write or writeToURL.
+  NSDictionary *dict = [download dictionaryRepresentation];
+  NSString *errorDesc = nil;
+  NSData *plistData = [NSPropertyListSerialization dataFromPropertyList:dict 
+                                                                 format:NSPropertyListBinaryFormat_v1_0 
+                                                       errorDescription:&errorDesc];
+  
+  if (plistData) {
+    BOOL success = [plistData writeToFile:resourcePath atomically:NO];
+    if (!success) {
+      NSLog(@"[TDLDownloadList] ERROR: Could not write plist data to resource fork at %@", resourcePath);
+    }
+  } else {
+    NSLog(@"[TDLDownloadList] ERROR: Could not serialize metadata: %@", errorDesc);
+    [errorDesc release];
   }
-  return nil;
 }
 
-- (TDLDownload *)createDownload {
-  NSString *rawUdid = [[NSProcessInfo processInfo] globallyUniqueString];
-  NSString *udid = [[rawUdid stringByReplacingOccurrencesOfString:@"-" withString:@""] lowercaseString];
-  if ([udid length] > 12) {
-    udid = [udid substringToIndex:12];
-  }
-  
-  TDLDownload *download = [[TDLDownload alloc] init];
-  [download setUdid:udid];
-  
-  // Cache it temporarily if needed, but we mainly rely on disk now
-  [self saveDownload:download];
-  
-  return [download autorelease];
-}
-
-- (void)saveDownload:(TDLDownload *)download {
-  if (![download udid]) return;
-  
-  NSString *downloadsPath = [TDLDownloadList downloadsDirectory];
-  NSFileManager *fileManager = [NSFileManager defaultManager];
-  
-  [fileManager createDirectoryAtPath:downloadsPath 
-         withIntermediateDirectories:YES 
-                          attributes:nil 
-                               error:nil];
-  
-  NSString *plistName = [[download udid] stringByAppendingPathExtension:@"plist"];
-  NSString *fullPath = [downloadsPath stringByAppendingPathComponent:plistName];
-  
-  [[download dictionaryRepresentation] writeToFile:fullPath atomically:YES];
-}
-
-- (void)deleteDownload:(TDLDownload *)download {
-  if (![download udid]) return;
-  
-  NSString *downloadsPath = [TDLDownloadList downloadsDirectory];
-  NSFileManager *fileManager = [NSFileManager defaultManager];
-  
-  // Delete Plist
-  NSString *plistName = [[download udid] stringByAppendingPathExtension:@"plist"];
-  NSString *plistPath = [downloadsPath stringByAppendingPathComponent:plistName];
-  [fileManager removeItemAtPath:plistPath error:nil];
-  
-  // Delete Data File
-  if ([download filePath]) {
-    [fileManager removeItemAtPath:[download filePath] error:nil];
-  }
+- (void)deleteFileAtURL:(NSURL *)url {
+  if (!url) return;
+  [[NSFileManager defaultManager] removeItemAtPath:[url path] error:nil];
 }
 
 @end

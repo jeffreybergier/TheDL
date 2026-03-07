@@ -1,6 +1,7 @@
 #import "TDLURLConnectionService.h"
 #import "TDLDownload.h"
 #import "TDLDownloadList.h"
+#import "TDLDownloadTask.h"
 #import "CrossPlatform.h"
 
 @implementation TDLURLConnectionService
@@ -38,93 +39,97 @@
 
 - (void)fetchURL:(NSURL *)url {
   NSLog(@"[TDLURLConnectionService fetchURL:] %@", url);
+  
+  TDLDownload *metadata = [[TDLDownload alloc] init];
+  [metadata setRequestURL:[url absoluteString]];
+  [metadata setServiceIdentifier:[self serviceIdentifier]];
+  [metadata setState:TDLDownloadStateDownloading];
+  
+  NSString *lastComponent = [[url path] lastPathComponent];
+  if (!lastComponent || [lastComponent length] == 0) {
+    lastComponent = @"download.data";
+  }
+  
+  NSString *downloadsDir = [TDLDownloadList downloadsDirectory];
+  NSString *dataPath = [downloadsDir stringByAppendingPathComponent:lastComponent];
+  
+  // Deduplicate
+  if ([[NSFileManager defaultManager] fileExistsAtPath:dataPath]) {
+    NSString *timestamp = [NSString stringWithFormat:@"-%ld", (long)[[NSDate date] timeIntervalSince1970]];
+    NSString *base = [lastComponent stringByDeletingPathExtension];
+    NSString *ext = [lastComponent pathExtension];
+    dataPath = [downloadsDir stringByAppendingPathComponent:[[base stringByAppendingString:timestamp] stringByAppendingPathExtension:ext]];
+  }
+  
+  // Create empty file
+  [[NSData data] writeToFile:dataPath atomically:YES];
+  NSURL *fileURL = [NSURL fileURLWithPath:dataPath];
+  
+  TDLDownloadTask *task = [[TDLDownloadTask alloc] initWithTargetURL:fileURL metadata:metadata];
+  [metadata release];
+  
   NSURLRequest *request = [NSURLRequest requestWithURL:url];
   NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request 
                                                                 delegate:self];
   if (connection) {
-    TDLDownload *download = [[TDLDownloadList sharedList] createDownload];
-    [download setRequestURL:[url absoluteString]];
-    [download setServiceIdentifier:[self serviceIdentifier]];
-    [download setState:TDLDownloadStateDownloading];
-    [download setDisplayName:[[url path] lastPathComponent]];
-    
-    NSString *extension = [[url path] pathExtension];
-    if (!extension || [extension length] == 0) {
-      extension = @"data";
-    }
-    
-    NSString *fileName = [[download udid] stringByAppendingPathExtension:extension];
-    NSString *downloadsDir = [[TDLDownloadList sharedList] downloadsDirectory];
-    NSString *dataPath = [downloadsDir stringByAppendingPathComponent:fileName];
-    [download setFilePath:dataPath];
-    
-    // Ensure file exists
-    [[NSData data] writeToFile:dataPath atomically:YES];
-    
-    [[TDLDownloadList sharedList] saveDownload:download];
-    
-    [_activeTasks setObject:download forKey:[NSValue valueWithPointer:connection]];
-    [_taskList addObject:download];
+    [task setConnection:connection];
+    [_activeTasks setObject:task forKey:[NSValue valueWithPointer:connection]];
+    [_taskList addObject:fileURL];
   }
+  
+  [task release];
   [connection release];
 }
 
 - (NSArray *)activeTasks {
-  NSMutableArray *tasks = [NSMutableArray array];
-  NSEnumerator *e = [_taskList objectEnumerator];
-  TDLDownload *download;
-  while ((download = [e nextObject])) {
-    if ([download state] == TDLDownloadStateDownloading || [download state] == TDLDownloadStateFailed) {
-      [tasks addObject:download];
-    }
-  }
-  return tasks;
+  return [NSArray array];
 }
 
 #pragma mark - NSURLConnection Delegate
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-  TDLDownload *download = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
-  if (download) {
-    NSLog(@"[TDLURLConnectionService] Received response for %@", [download udid]);
-    [download setDisplayName:[response suggestedFilename]];
-    [download setContentType:[response MIMEType]];
-    [download setContentSize:[response expectedContentLength]];
-    [download setResponseURL:[[response URL] absoluteString]];
-    [[TDLDownloadList sharedList] saveDownload:download];
+  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  if (task) {
+    TDLDownload *metadata = [task metadata];
+    [metadata setContentType:[response MIMEType]];
+    [metadata setContentSize:[response expectedContentLength]];
+    [metadata setResponseURL:[[response URL] absoluteString]];
   }
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-  TDLDownload *download = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
-  if (download) {
-    NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:[download filePath]];
+  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  if (task) {
+    NSFileHandle *handle = [NSFileHandle fileHandleForWritingToURL:[task targetFileURL] error:nil];
     [handle seekToEndOfFile];
     [handle writeData:data];
     [handle closeFile];
-    
-    [download setActualSize:[download actualSize] + [data length]];
-    [[TDLDownloadList sharedList] saveDownload:download];
   }
 }
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-  TDLDownload *download = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
-  if (download) {
-    NSLog(@"[TDLURLConnectionService] Failed: %@", [error localizedDescription]);
-    [download setState:TDLDownloadStateFailed];
-    [download setErrorMessage:[error localizedDescription]];
-    [[TDLDownloadList sharedList] saveDownload:download];
+  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  if (task) {
+    TDLDownload *metadata = [task metadata];
+    [metadata setState:TDLDownloadStateFailed];
+    [metadata setErrorMessage:[error localizedDescription]];
+    
+    // Save metadata even on failure if we have a file
+    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    
     [_activeTasks removeObjectForKey:[NSValue valueWithPointer:connection]];
   }
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-  TDLDownload *download = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
-  if (download) {
-    NSLog(@"[TDLURLConnectionService] Finished: %@", [download udid]);
-    [download setState:TDLDownloadStateFinished];
-    [[TDLDownloadList sharedList] saveDownload:download];
+  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  if (task) {
+    TDLDownload *metadata = [task metadata];
+    [metadata setState:TDLDownloadStateFinished];
+    
+    // SAVE TO RESOURCE FORK
+    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    
     [_activeTasks removeObjectForKey:[NSValue valueWithPointer:connection]];
   }
 }

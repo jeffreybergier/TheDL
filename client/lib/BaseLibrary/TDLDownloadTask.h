@@ -1,38 +1,23 @@
 #import <Foundation/Foundation.h>
 
-typedef enum {
-  TDLDownloadTaskStateRunning,
-  TDLDownloadTaskStateFinished,
-  TDLDownloadTaskStateFailed
-} TDLDownloadTaskState;
+@class TDLDownload;
 
 /**
- * Represents an active or completed download task.
+ * Represents an in-progress download task.
  */
 @interface TDLDownloadTask : NSObject {
  @private
-  NSURL *_url;
-  TDLDownloadTaskState _state;
-  NSMutableData *_accumulatedData;
-  NSString *_errorMessage;
-  NSString *_suggestedFilename;
-  NSString *_contentType;
+  NSURL *_targetFileURL;
+  TDLDownload *_metadata;
+  NSURLConnection *_connection;
 }
 
-- (id)initWithURL:(NSURL *)url;
+- (id)initWithTargetURL:(NSURL *)fileURL metadata:(TDLDownload *)download;
 
-- (NSURL *)url;
-- (TDLDownloadTaskState)state;
-- (void)setState:(TDLDownloadTaskState)state;
+- (NSURL *)targetFileURL;
+- (TDLDownload *)metadata;
 
-- (NSMutableData *)accumulatedData;
-- (NSString *)errorMessage;
-- (void)setErrorMessage:(NSString *)error;
-
-- (NSString *)suggestedFilename;
-- (void)setSuggestedFilename:(NSString *)filename;
-
-- (NSString *)contentType;
-- (void)setContentType:(NSString *)type;
+- (NSURLConnection *)connection;
+- (void)setConnection:(NSURLConnection *)connection;
 
 @end

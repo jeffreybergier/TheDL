@@ -42,42 +42,47 @@
 
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
-  // [self refreshDownloads];
+  [self refreshDownloads];
 }
 
 - (void)refreshDownloads {
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Start");
+  // Loads ALL files in Downloads directory
   [_downloads release];
   _downloads = [[[TDLDownloadList sharedList] allDownloads] retain];
-  NSLog(@"[TDLDownloadTableViewController refreshDownloads] Loaded %lu downloads", (unsigned long)[_downloads count]);
+  NSLog(@"[TDLDownloadTableViewController refreshDownloads] Found %lu files", (unsigned long)[_downloads count]);
   [[self tableView] reloadData];
 }
 
-- (void)openDownload:(TDLDownload *)download {
-  if (!download) return;
+- (void)openDownloadWithURL:(NSURL *)fileURL {
+  if (!fileURL) return;
   
-  NSString *contentType = [download contentType];
+  TDLDownload *metadata = [[TDLDownloadList sharedList] getTDLDownloadForURL:fileURL];
+  NSString *contentType = [metadata contentType];
+  
   if ([contentType hasPrefix:@"image/"]) {
-    TDLImageViewController *imageVC = [[TDLImageViewController alloc] initWithDownload:download];
+    // Note: TDLImageViewController needs update to take URL
+    TDLImageViewController *imageVC = [[TDLImageViewController alloc] initWithDownloadURL:fileURL];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:imageVC];
     [self presentModalViewController:nav animated:YES];
     [imageVC release];
     [nav release];
   } else if ([contentType hasPrefix:@"video/"]) {
-    NSURL *url = [NSURL fileURLWithPath:[download filePath]];
-    TDLPlayerViewController *playerVC = [[TDLPlayerViewController alloc] initWithContentURL:url];
+    TDLPlayerViewController *playerVC = [[TDLPlayerViewController alloc] initWithContentURL:fileURL];
     [self presentModalViewController:playerVC animated:YES];
     [playerVC play];
     [playerVC release];
   } else if ([contentType hasPrefix:@"text/"] || [contentType containsString:@"xml"] || [contentType containsString:@"json"]) {
-    TDLTextViewController *textVC = [[TDLTextViewController alloc] initWithDownload:download];
+    // Note: TDLTextViewController needs update to take URL
+    TDLTextViewController *textVC = [[TDLTextViewController alloc] initWithDownloadURL:fileURL];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:textVC];
     [self presentModalViewController:nav animated:YES];
     [textVC release];
     [nav release];
   } else {
+    // Generic fallback for unknown types
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Cannot Open" 
-                                                    message:@"This file type is not supported for viewing yet." 
+                                                    message:[NSString stringWithFormat:@"File type '%@' is not supported.", contentType ? contentType : @"unknown"]
                                                    delegate:nil 
                                           cancelButtonTitle:@"OK" 
                                           otherButtonTitles:nil];
@@ -105,26 +110,24 @@
     [cell setAccessoryType:UITableViewCellAccessoryDetailButton];
   }
   
-  NSURL *plistUrl = [_downloads objectAtIndex:[indexPath row]];
-  TDLDownload *download = [[TDLDownloadList sharedList] getTDLDownloadForURL:plistUrl];
+  NSURL *fileURL = [_downloads objectAtIndex:[indexPath row]];
+  TDLDownload *metadata = [[TDLDownloadList sharedList] getTDLDownloadForURL:fileURL];
   
-  if (download) {
-    [[cell textLabel] setText:[download displayName]];
-    
-    long kb = (long)([download actualSize] / 1024);
-    NSString *type = [download contentType] ? [download contentType] : @"unknown";
-    
-    // Extract last component of reverse-dns service identifier
-    NSString *service = [[[download serviceIdentifier] componentsSeparatedByString:@"."] lastObject];
-    if (!service) service = @"unknown";
+  [[cell textLabel] setText:[fileURL lastPathComponent]];
+  
+  NSNumber *fileSizeNumber = nil;
+  [fileURL getResourceValue:&fileSizeNumber forKey:NSURLFileSizeKey error:nil];
+  long kb = (long)([fileSizeNumber longLongValue] / 1024);
+  
+  NSString *type = [metadata contentType] ? [metadata contentType] : @"unknown";
+  
+  // Extract last component of reverse-dns service identifier
+  NSArray *serviceComponents = [[metadata serviceIdentifier] componentsSeparatedByString:@"."];
+  NSString *service = [serviceComponents lastObject];
+  if (!service) service = @"none";
 
-    NSString *detail = [NSString stringWithFormat:@"%ld KB・%@・%@", kb, type, service];
-    [[cell detailTextLabel] setText:detail];
-
-  } else {
-    [[cell textLabel] setText:@"Error loading download"];
-    [[cell detailTextLabel] setText:nil];
-  }
+  NSString *detail = [NSString stringWithFormat:@"%ld KB・%@・%@", kb, type, service];
+  [[cell detailTextLabel] setText:detail];
   
   return cell;
 }
@@ -135,11 +138,8 @@
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
   if (editingStyle == UITableViewCellEditingStyleDelete) {
-    NSURL *plistUrl = [_downloads objectAtIndex:[indexPath row]];
-    TDLDownload *download = [[TDLDownloadList sharedList] getTDLDownloadForURL:plistUrl];
-    if (download) {
-      [[TDLDownloadList sharedList] deleteDownload:download];
-    }
+    NSURL *fileURL = [_downloads objectAtIndex:[indexPath row]];
+    [[TDLDownloadList sharedList] deleteFileAtURL:fileURL];
     [self refreshDownloads];
   }
 }
@@ -149,23 +149,19 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
   [tableView deselectRowAtIndexPath:indexPath animated:YES];
   
-  NSURL *plistUrl = [_downloads objectAtIndex:[indexPath row]];
-  TDLDownload *download = [[TDLDownloadList sharedList] getTDLDownloadForURL:plistUrl];
-  if (download) {
-    [self openDownload:download];
-  }
+  NSURL *fileURL = [_downloads objectAtIndex:[indexPath row]];
+  [self openDownloadWithURL:fileURL];
 }
 
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
-  NSURL *plistUrl = [_downloads objectAtIndex:[indexPath row]];
-  TDLDownload *download = [[TDLDownloadList sharedList] getTDLDownloadForURL:plistUrl];
-  if (download) {
-    TDLDownloadInfoViewController *infoVC = [[TDLDownloadInfoViewController alloc] initWithDownload:download];
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:infoVC];
-    [self presentModalViewController:nav animated:YES];
-    [infoVC release];
-    [nav release];
-  }
+  NSURL *fileURL = [_downloads objectAtIndex:[indexPath row]];
+  TDLDownload *metadata = [[TDLDownloadList sharedList] getTDLDownloadForURL:fileURL];
+  
+  TDLDownloadInfoViewController *infoVC = [[TDLDownloadInfoViewController alloc] initWithMetadata:metadata fileURL:fileURL];
+  UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:infoVC];
+  [self presentModalViewController:nav animated:YES];
+  [infoVC release];
+  [nav release];
 }
 
 @end

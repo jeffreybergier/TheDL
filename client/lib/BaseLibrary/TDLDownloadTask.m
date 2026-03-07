@@ -1,52 +1,32 @@
 #import "TDLDownloadTask.h"
+#import "TDLDownload.h"
 
 @implementation TDLDownloadTask
 
-- (id)initWithURL:(NSURL *)url {
+- (id)initWithTargetURL:(NSURL *)fileURL metadata:(TDLDownload *)download {
   self = [super init];
   if (self) {
-    _url = [url retain];
-    _state = TDLDownloadTaskStateRunning;
-    _accumulatedData = [[NSMutableData alloc] init];
+    _targetFileURL = [fileURL retain];
+    _metadata = [download retain];
   }
   return self;
 }
 
 - (void)dealloc {
-  [_url release];
-  [_accumulatedData release];
-  [_errorMessage release];
-  [_suggestedFilename release];
-  [_contentType release];
+  [_targetFileURL release];
+  [_metadata release];
+  [_connection release];
   [super dealloc];
 }
 
-- (NSURL *)url { return _url; }
-- (TDLDownloadTaskState)state { return _state; }
-- (void)setState:(TDLDownloadTaskState)state { _state = state; }
+- (NSURL *)targetFileURL { return _targetFileURL; }
+- (TDLDownload *)metadata { return _metadata; }
 
-- (NSMutableData *)accumulatedData { return _accumulatedData; }
-- (NSString *)errorMessage { return _errorMessage; }
-- (void)setErrorMessage:(NSString *)error {
-  if (_errorMessage != error) {
-    [_errorMessage release];
-    _errorMessage = [error copy];
-  }
-}
-
-- (NSString *)suggestedFilename { return _suggestedFilename; }
-- (void)setSuggestedFilename:(NSString *)filename {
-  if (_suggestedFilename != filename) {
-    [_suggestedFilename release];
-    _suggestedFilename = [filename copy];
-  }
-}
-
-- (NSString *)contentType { return _contentType; }
-- (void)setContentType:(NSString *)type {
-  if (_contentType != type) {
-    [_contentType release];
-    _contentType = [type copy];
+- (NSURLConnection *)connection { return _connection; }
+- (void)setConnection:(NSURLConnection *)connection {
+  if (_connection != connection) {
+    [_connection release];
+    _connection = [connection retain];
   }
 }
 

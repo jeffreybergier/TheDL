@@ -7,14 +7,15 @@
  */
 @interface TDLDownloadInfoViewController : UITableViewController {
  @private
-  TDLDownload *_download;
+  TDLDownload *_metadata;
+  NSURL *_fileURL;
   NSArray *_keys;
   NSDictionary *_data;
 }
 
 /**
- * Initializes the info view with a download object.
+ * Initializes the info view with metadata and the associated file URL.
  */
-- (id)initWithDownload:(TDLDownload *)download;
+- (id)initWithMetadata:(TDLDownload *)metadata fileURL:(NSURL *)url;
 
 @end

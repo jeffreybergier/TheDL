@@ -1,15 +1,10 @@
 #import "TDLDownload.h"
-#import "TDLDownloadList.h"
 
-static NSString *const kUdidKey = @"udid";
-static NSString *const kDisplayNameKey = @"displayName";
-static NSString *const kFilePathKey = @"filePath";
 static NSString *const kContentTypeKey = @"contentType";
 static NSString *const kRequestURLKey = @"requestURL";
 static NSString *const kResponseURLKey = @"responseURL";
 static NSString *const kServiceIdentKey = @"serviceIdent";
 static NSString *const kStateKey = @"state";
-static NSString *const kActualSizeKey = @"actualSize";
 static NSString *const kContentSizeKey = @"contentSize";
 static NSString *const kErrorMsgKey = @"errorMessage";
 
@@ -19,7 +14,6 @@ static NSString *const kErrorMsgKey = @"errorMessage";
   self = [super init];
   if (self) {
     _state = TDLDownloadStatePending;
-    _actualSize = 0;
     _contentSize = 0;
   }
   return self;
@@ -28,23 +22,11 @@ static NSString *const kErrorMsgKey = @"errorMessage";
 - (id)initWithDictionary:(NSDictionary *)dict {
   self = [self init];
   if (self) {
-    _udid = [[dict objectForKey:kUdidKey] copy];
-    _displayName = [[dict objectForKey:kDisplayNameKey] copy];
-    
-    // SURVIVE CONTAINER MOVES:
-    // Plist stores relative filename. We reconstruct absolute path for the CURRENT container.
-    NSString *fileName = [dict objectForKey:kFilePathKey];
-    if (fileName) {
-      NSString *downloadsDir = [TDLDownloadList downloadsDirectory];
-      _filePath = [[downloadsDir stringByAppendingPathComponent:fileName] copy];
-    }
-    
     _contentType = [[dict objectForKey:kContentTypeKey] copy];
     _requestURL = [[dict objectForKey:kRequestURLKey] copy];
     _responseURL = [[dict objectForKey:kResponseURLKey] copy];
     _serviceIdentifier = [[dict objectForKey:kServiceIdentKey] copy];
     _state = (TDLDownloadState)[[dict objectForKey:kStateKey] intValue];
-    _actualSize = [[dict objectForKey:kActualSizeKey] longLongValue];
     _contentSize = [[dict objectForKey:kContentSizeKey] longLongValue];
     _errorMessage = [[dict objectForKey:kErrorMsgKey] copy];
   }
@@ -53,30 +35,17 @@ static NSString *const kErrorMsgKey = @"errorMessage";
 
 - (NSDictionary *)dictionaryRepresentation {
   NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-  if (_udid) [dict setObject:_udid forKey:kUdidKey];
-  if (_displayName) [dict setObject:_displayName forKey:kDisplayNameKey];
-  
-  // SURVIVE CONTAINER MOVES:
-  // Only save the filename, not the absolute path which will break if container changes.
-  if (_filePath) {
-    [dict setObject:[_filePath lastPathComponent] forKey:kFilePathKey];
-  }
-  
   if (_contentType) [dict setObject:_contentType forKey:kContentTypeKey];
   if (_requestURL) [dict setObject:_requestURL forKey:kRequestURLKey];
   if (_responseURL) [dict setObject:_responseURL forKey:kResponseURLKey];
   if (_serviceIdentifier) [dict setObject:_serviceIdentifier forKey:kServiceIdentKey];
   [dict setObject:[NSNumber numberWithInt:(int)_state] forKey:kStateKey];
-  [dict setObject:[NSNumber numberWithLongLong:_actualSize] forKey:kActualSizeKey];
   [dict setObject:[NSNumber numberWithLongLong:_contentSize] forKey:kContentSizeKey];
   if (_errorMessage) [dict setObject:_errorMessage forKey:kErrorMsgKey];
   return dict;
 }
 
 - (void)dealloc {
-  [_udid release];
-  [_displayName release];
-  [_filePath release];
   [_contentType release];
   [_requestURL release];
   [_responseURL release];
@@ -86,30 +55,6 @@ static NSString *const kErrorMsgKey = @"errorMessage";
 }
 
 #pragma mark - Accessors
-
-- (NSString *)udid { return _udid; }
-- (void)setUdid:(NSString *)udid {
-  if (_udid != udid) {
-    [_udid release];
-    _udid = [udid copy];
-  }
-}
-
-- (NSString *)displayName { return _displayName; }
-- (void)setDisplayName:(NSString *)name {
-  if (_displayName != name) {
-    [_displayName release];
-    _displayName = [name copy];
-  }
-}
-
-- (NSString *)filePath { return _filePath; }
-- (void)setFilePath:(NSString *)path {
-  if (_filePath != path) {
-    [_filePath release];
-    _filePath = [path copy];
-  }
-}
 
 - (NSString *)contentType { return _contentType; }
 - (void)setContentType:(NSString *)type {
@@ -145,9 +90,6 @@ static NSString *const kErrorMsgKey = @"errorMessage";
 
 - (TDLDownloadState)state { return _state; }
 - (void)setState:(TDLDownloadState)state { _state = state; }
-
-- (long long)actualSize { return _actualSize; }
-- (void)setActualSize:(long long)size { _actualSize = size; }
 
 - (long long)contentSize { return _contentSize; }
 - (void)setContentSize:(long long)size { _contentSize = size; }
