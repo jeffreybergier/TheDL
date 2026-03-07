@@ -40,12 +40,21 @@
     if (url) {
       [_service fetchURL:url];
       [(UITextView *)_urlField setText:@""];
+      // Refresh the button state
+      [self textViewDidChange:(UITextView *)_urlField];
     }
   }
   [_urlField resignFirstResponder];
 }
 
 #pragma mark - UITextViewDelegate
+
+- (void)textViewDidChange:(UITextView *)textView {
+  // Reload only the button row to update enabled state
+  NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:0];
+  [[self tableView] reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] 
+                          withRowAnimation:UITableViewRowAnimationNone];
+}
 
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
   if ([text isEqualToString:@"\n"]) {
@@ -63,7 +72,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
   if (section == 0) return 2; // Row 0: TextView, Row 1: Download Button
-  return 3;
+  return [[[TDLService sampleURLs] allKeys] count];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
@@ -99,9 +108,19 @@
         cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault 
                                        reuseIdentifier:ButtonCellID] autorelease];
         [[cell textLabel] setTextAlignment:NSTextAlignmentCenter];
-        [[cell textLabel] setTextColor:[UIColor blueColor]];
       }
+      
       [[cell textLabel] setText:@"Download"];
+      
+      BOOL hasText = [[(UITextView *)_urlField text] length] > 0;
+      if (hasText) {
+        [[cell textLabel] setTextColor:[UIColor blueColor]];
+        [cell setSelectionStyle:UITableViewCellSelectionStyleBlue];
+      } else {
+        [[cell textLabel] setTextColor:[UIColor grayColor]];
+        [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
+      }
+      
       return cell;
     }
   } else {
@@ -112,13 +131,11 @@
                                      reuseIdentifier:SampleCellID] autorelease];
     }
     
-    if (indexPath.row == 0) {
-      [[cell textLabel] setText:@"Sample Image"];
-    } else if (indexPath.row == 1) {
-      [[cell textLabel] setText:@"Sample Video"];
-    } else {
-      [[cell textLabel] setText:@"Sample Text"];
-    }
+    NSDictionary *samples = [TDLService sampleURLs];
+    NSArray *sortedKeys = [[samples allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    NSString *name = [sortedKeys objectAtIndex:indexPath.row];
+    [[cell textLabel] setText:name];
+    
     return cell;
   }
 }
@@ -127,17 +144,18 @@
   [tableView deselectRowAtIndexPath:indexPath animated:YES];
   
   if (indexPath.section == 0 && indexPath.row == 1) {
-    [self fetchAction];
-  } else if (indexPath.section == 1) {
-    NSString *urlStr = @"";
-    if (indexPath.row == 0) {
-      urlStr = @"https://www.google.com/images/branding/googlelogo/1x/googlelogo_white_background_color_272x92dp.png";
-    } else if (indexPath.row == 1) {
-      urlStr = @"http://rss-the-planet.saturdayapps.workers.dev/proxy/aHR0cHMlM0ElMkYlMkZ3c2IuaG9zdGRvbi5uZS5qcCUyRnNnbTIzNCUyRmNhY2hlJTJGbWVkaWFfYXR0YWNobWVudHMlMkZmaWxlcyUyRjExNiUyRjE3OSUyRjkyMCUyRjEyMCUyRjAyNyUyRjA3MyUyRm9yaWdpbmFsJTJGODQ4NDAzMThkNGIzNTlhMi5tcDQ%3D/318d4b359a2.mp4?key=vXnQzLwR&option=asset";
-    } else {
-      urlStr = @"https://daringfireball.net/feeds/main";
+    if ([[(UITextView *)_urlField text] length] > 0) {
+      [self fetchAction];
     }
+  } else if (indexPath.section == 1) {
+    NSDictionary *samples = [TDLService sampleURLs];
+    NSArray *sortedKeys = [[samples allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    NSString *name = [sortedKeys objectAtIndex:indexPath.row];
+    NSString *urlStr = [samples objectForKey:name];
+    
     [(UITextView *)_urlField setText:urlStr];
+    // Refresh the button state
+    [self textViewDidChange:(UITextView *)_urlField];
   }
 }
 

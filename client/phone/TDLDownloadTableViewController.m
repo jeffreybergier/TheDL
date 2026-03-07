@@ -5,6 +5,7 @@
 #import "TDLPlayerViewController.h"
 #import "TDLDownloadInfoViewController.h"
 #import "TDLTextViewController.h"
+#import "TDLServiceListViewController.h"
 #import "CrossPlatform.h"
 
 @implementation TDLDownloadTableViewController
@@ -12,7 +13,7 @@
 - (id)init {
   self = [super initWithStyle:UITableViewStylePlain];
   if (self) {
-    [self setTitle:@"Load"];
+    [self setTitle:@"TheDL"];
     _downloads = [[NSArray alloc] init];
   }
   return self;
@@ -28,13 +29,18 @@
   [super viewDidLoad];
   NSLog(@"[TDLDownloadTableViewController viewDidLoad]");
 
+  UIBarButtonItem *addButton = [[UIBarButtonItem alloc]
+                                 initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
+                                 target:self
+                                 action:@selector(addDownload)];
+  [[self navigationItem] setRightBarButtonItem:addButton];
+  [addButton release];
+
   UIBarButtonItem *refreshButton = [[UIBarButtonItem alloc]
                                     initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh
                                     target:self
                                     action:@selector(refreshDownloads)];
-
-  [[self navigationItem] setRightBarButtonItem:refreshButton];
-
+  [[self navigationItem] setLeftBarButtonItem:refreshButton];
   [refreshButton release];
 
   [self refreshDownloads];
@@ -45,9 +51,16 @@
   [self refreshDownloads];
 }
 
+- (void)addDownload {
+  TDLServiceListViewController *serviceListVC = [[TDLServiceListViewController alloc] init];
+  UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:serviceListVC];
+  [self presentModalViewController:nav animated:YES];
+  [serviceListVC release];
+  [nav release];
+}
+
 - (void)refreshDownloads {
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Start");
-  // Loads ALL files in Downloads directory
   [_downloads release];
   _downloads = [[[TDLDownloadList sharedList] allDownloads] retain];
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Found %lu files", (unsigned long)[_downloads count]);
@@ -61,7 +74,6 @@
   NSString *contentType = [metadata contentType];
   
   if ([contentType hasPrefix:@"image/"]) {
-    // Note: TDLImageViewController needs update to take URL
     TDLImageViewController *imageVC = [[TDLImageViewController alloc] initWithDownloadURL:fileURL];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:imageVC];
     [self presentModalViewController:nav animated:YES];
@@ -73,14 +85,12 @@
     [playerVC play];
     [playerVC release];
   } else if ([contentType hasPrefix:@"text/"] || [contentType containsString:@"xml"] || [contentType containsString:@"json"]) {
-    // Note: TDLTextViewController needs update to take URL
     TDLTextViewController *textVC = [[TDLTextViewController alloc] initWithDownloadURL:fileURL];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:textVC];
     [self presentModalViewController:nav animated:YES];
     [textVC release];
     [nav release];
   } else {
-    // Generic fallback for unknown types
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Cannot Open" 
                                                     message:[NSString stringWithFormat:@"File type '%@' is not supported.", contentType ? contentType : @"unknown"]
                                                    delegate:nil 
@@ -122,8 +132,7 @@
   NSString *type = [metadata contentType] ? [metadata contentType] : @"unknown";
   
   // Extract last component of reverse-dns service identifier
-  NSArray *serviceComponents = [[metadata serviceIdentifier] componentsSeparatedByString:@"."];
-  NSString *service = [serviceComponents lastObject];
+  NSString *service = [[[metadata serviceIdentifier] componentsSeparatedByString:@"."] lastObject];
   if (!service) service = @"none";
 
   NSString *detail = [NSString stringWithFormat:@"%ld KB・%@・%@", kb, type, service];

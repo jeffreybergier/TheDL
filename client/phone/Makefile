@@ -9,7 +9,7 @@ BASE_DIR = ../lib/BaseLibrary
 LIB_INCLUDES = -I. -I$(XP_DIR) -I$(BASE_DIR) $(CURL_INC)
 
 # Source
-SRCS = ios_main.m AppDelegate.m RootViewController.m \
+SRCS = ios_main.m AppDelegate.m \
         TDLDownloadTableViewController.m TDLServiceListViewController.m \
         TDLURLConnectionServiceTableViewController.m \
         TDLCURLRequestServiceTableViewController.m \

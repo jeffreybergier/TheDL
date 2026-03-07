@@ -11,9 +11,24 @@
 - (id)init {
   self = [super initWithStyle:UITableViewStyleGrouped];
   if (self) {
-    [self setTitle:@"Down"];
+    [self setTitle:@"Services"];
   }
   return self;
+}
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+  
+  UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] 
+                                  initWithBarButtonSystemItem:UIBarButtonSystemItemDone 
+                                  target:self 
+                                  action:@selector(dismiss)];
+  [[self navigationItem] setLeftBarButtonItem:doneButton];
+  [doneButton release];
+}
+
+- (void)dismiss {
+  [self dismissModalViewControllerAnimated:YES];
 }
 
 #pragma mark - Table view data source

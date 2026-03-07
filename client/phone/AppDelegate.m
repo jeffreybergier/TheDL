@@ -1,5 +1,5 @@
 #import "AppDelegate.h"
-#import "RootViewController.h"
+#import "TDLDownloadTableViewController.h"
 #import "CrossPlatform.h"
 
 @implementation AppDelegate
@@ -25,14 +25,16 @@
   _window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
   [_window setBackgroundColor:[UIColor whiteColor]];
   
-  _rootViewController = [[RootViewController alloc] init];
-  NSLog(@"[AppDelegate application:didFinishLaunchingWithOptions:] RootViewController created");
+  TDLDownloadTableViewController *downloadVC = [[TDLDownloadTableViewController alloc] init];
+  _rootViewController = (id)[[UINavigationController alloc] initWithRootViewController:downloadVC];
+  [downloadVC release];
   
-  // setRootViewController: is iOS 4.0+, use addSubview: for 3.1 compatibility
+  NSLog(@"[AppDelegate application:didFinishLaunchingWithOptions:] Root NavigationController created");
+  
   if ([_window respondsToSelector:@selector(setRootViewController:)]) {
-    [_window setRootViewController:_rootViewController];
+    [_window setRootViewController:(id)_rootViewController];
   } else {
-    [_window addSubview:[_rootViewController view]];
+    [_window addSubview:[(id)_rootViewController view]];
   }
   
   [_window makeKeyAndVisible];

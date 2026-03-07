@@ -25,4 +25,10 @@
  */
 - (NSArray *)activeTasks;
 
+/**
+ * Returns a dictionary of sample URLs for testing.
+ * Keys are display names, values are URL strings.
+ */
++ (NSDictionary *)sampleURLs;
+
 @end
