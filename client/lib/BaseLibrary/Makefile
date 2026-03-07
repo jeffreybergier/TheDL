@@ -26,7 +26,13 @@ endif
 test: test_mac test_sim
 
 ios: $(LIB_OUT_DIR)/libBase_iOS.a
-sim: $(LIB_OUT_DIR)/libBase_Sim.a
+sim:
+ifeq ($(HAS_OSXCROSS), 1)
+	@echo "Skipping sim in Docker"
+else
+	$(MAKE) $(LIB_OUT_DIR)/libBase_Sim.a
+endif
+
 mac: $(LIB_OUT_DIR)/libBase_Mac.a
 
 $(LIB_OUT_DIR)/libBase_iOS.a: $(SRCS)

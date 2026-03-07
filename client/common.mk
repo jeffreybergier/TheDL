@@ -32,7 +32,7 @@ ifeq ($(HAS_OSXCROSS), 1)
   
   # Architectures & Flags
   IOS_ARCHS = -target apple-ios$(IOS_MIN) -arch armv7 -arch armv7s -arch arm64 -DTHEDL_CURL_ENABLED=1
-  SIM_ARCHS = -target i386-apple-ios8.0-simulator -DTHEDL_CURL_ENABLED=0
+  SIM_ARCHS = -target i386-apple-ios8.0-simulator -DTHEDL_CURL_ENABLED=1
   MAC_ARCHS = -target apple-macosx$(MAC_MIN) -arch x86_64 -arch i386 -DTHEDL_CURL_ENABLED=1
   SIM_FLAGS = -miphoneos-version-min=$(IOS_MIN)
 
@@ -62,7 +62,7 @@ else
 
   # Architectures & Flags
   IOS_ARCHS = -arch armv7 -arch armv7s -arch arm64 -DTHEDL_CURL_ENABLED=1
-  SIM_ARCHS = -arch i386 -DTHEDL_CURL_ENABLED=0
+  SIM_ARCHS = -arch i386 -DTHEDL_CURL_ENABLED=1
   MAC_ARCHS = -arch x86_64 -arch i386 -DTHEDL_CURL_ENABLED=1
   SIM_FLAGS = -mios-simulator-version-min=$(IOS_MIN)
   
@@ -98,9 +98,9 @@ WARN_FLAGS = -Wall
 CLANG_WARN_FLAGS = $(WARN_FLAGS) -Wno-error=deprecated-declarations -Wno-unused-command-line-argument
 
 COMMON_FW = -ObjC -framework Foundation -framework CoreData
-IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore
-MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa -framework AVFoundation -framework QuartzCore
-SIM_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore
+IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore -Wl,-all_load
+MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa -framework AVFoundation -framework QuartzCore -Wl,-all_load
+SIM_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore -Wl,-all_load
 TEST_FW = -framework XCTest
 
 # Standard CFLAGS

@@ -24,9 +24,7 @@ sim:
 ifeq ($(HAS_OSXCROSS), 1)
 	@echo "Skipping sim in Docker"
 else
-	$(MAKE) libXP_Sim.a
-	@mkdir -p $(OUT_DIR)
-	cp libXP_Sim.a $(OUT_DIR)/
+	$(MAKE) $(LIB_OUT_DIR)/libXP_Sim.a
 endif
 
 mac: $(LIB_OUT_DIR)/libXP_Mac.a
