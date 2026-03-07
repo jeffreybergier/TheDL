@@ -26,24 +26,29 @@
   [super dealloc];
 }
 
-- (NSString *)downloadsDirectory {
++ (NSString *)downloadsDirectory {
   NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
   NSString *documentsDirectory = [paths objectAtIndex:0];
   return [documentsDirectory stringByAppendingPathComponent:@"Downloads"];
 }
 
+- (NSString *)downloadsDirectory {
+  return [TDLDownloadList downloadsDirectory];
+}
+
 - (void)loadDownloadsFromDisk {
   [_downloadCache removeAllObjects];
   
-  NSString *downloadsPath = [self downloadsDirectory];
+  NSString *downloadsPath = [TDLDownloadList downloadsDirectory];
   NSFileManager *fileManager = [NSFileManager defaultManager];
+  
+  NSLog(@"[TDLDownloadList] loadDownloadsFromDisk: path=%@", downloadsPath);
   
   BOOL isDir = NO;
   if (![fileManager fileExistsAtPath:downloadsPath isDirectory:&isDir] || !isDir) {
     return;
   }
   
-  // TODO: replace with contentsOfDirectoryAtPath:error: for 10.5+ / iOS 2.0+
   NSArray *files = [fileManager contentsOfDirectoryAtPath:downloadsPath error:nil];
   if (files) {
     NSEnumerator *e = [files objectEnumerator];
@@ -62,6 +67,7 @@
       }
     }
   }
+  NSLog(@"[TDLDownloadList] loadDownloadsFromDisk: loaded %lu objects", (unsigned long)[_downloadCache count]);
 }
 
 - (NSArray *)allDownloads {
@@ -73,7 +79,13 @@
 }
 
 - (TDLDownload *)createDownload {
-  NSString *udid = [[NSProcessInfo processInfo] globallyUniqueString];
+  NSString *rawUdid = [[NSProcessInfo processInfo] globallyUniqueString];
+  // Make it a bit cleaner by stripping dashes and taking a reasonable length
+  NSString *udid = [[rawUdid stringByReplacingOccurrencesOfString:@"-" withString:@""] lowercaseString];
+  if ([udid length] > 12) {
+    udid = [udid substringToIndex:12];
+  }
+  
   TDLDownload *download = [[TDLDownload alloc] init];
   [download setUdid:udid];
   
@@ -86,10 +98,9 @@
 - (void)saveDownload:(TDLDownload *)download {
   if (![download udid]) return;
   
-  NSString *downloadsPath = [self downloadsDirectory];
+  NSString *downloadsPath = [TDLDownloadList downloadsDirectory];
   NSFileManager *fileManager = [NSFileManager defaultManager];
   
-  // TODO: replace with createDirectoryAtPath:withIntermediateDirectories:attributes:error: for 10.5+ / iOS 2.0+
   [fileManager createDirectoryAtPath:downloadsPath 
          withIntermediateDirectories:YES 
                           attributes:nil 
@@ -99,6 +110,28 @@
   NSString *fullPath = [downloadsPath stringByAppendingPathComponent:plistName];
   
   [[download dictionaryRepresentation] writeToFile:fullPath atomically:YES];
+}
+
+- (void)deleteDownload:(TDLDownload *)download {
+  if (![download udid]) return;
+  
+  NSString *downloadsPath = [TDLDownloadList downloadsDirectory];
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  
+  NSLog(@"[TDLDownloadList] deleteDownload: %@", [download udid]);
+  
+  // Delete Plist
+  NSString *plistName = [[download udid] stringByAppendingPathExtension:@"plist"];
+  NSString *plistPath = [downloadsPath stringByAppendingPathComponent:plistName];
+  [fileManager removeItemAtPath:plistPath error:nil];
+  
+  // Delete Data File
+  if ([download filePath]) {
+    NSLog(@"[TDLDownloadList] Removing data file: %@", [download filePath]);
+    [fileManager removeItemAtPath:[download filePath] error:nil];
+  }
+  
+  [_downloadCache removeObjectForKey:[download udid]];
 }
 
 @end

@@ -13,7 +13,8 @@ SRCS = ios_main.m AppDelegate.m RootViewController.m \
         TDLDownloadTableViewController.m TDLServiceListViewController.m \
         TDLURLConnectionServiceTableViewController.m \
         TDLCURLRequestServiceTableViewController.m \
-        TDLImageViewController.m TDLPlayerViewController.m
+        TDLImageViewController.m TDLPlayerViewController.m \
+        TDLDownloadInfoViewController.m TDLTextViewController.m
 TEST_SRCS = tests/test_iphone_main.m
 
 # Resources

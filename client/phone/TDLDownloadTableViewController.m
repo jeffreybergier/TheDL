@@ -3,6 +3,8 @@
 #import "TDLDownload.h"
 #import "TDLImageViewController.h"
 #import "TDLPlayerViewController.h"
+#import "TDLDownloadInfoViewController.h"
+#import "TDLTextViewController.h"
 #import "CrossPlatform.h"
 
 @implementation TDLDownloadTableViewController
@@ -38,6 +40,11 @@
   [self refreshDownloads];
 }
 
+- (void)viewWillAppear:(BOOL)animated {
+  [super viewWillAppear:animated];
+  // [self refreshDownloads];
+}
+
 - (void)refreshDownloads {
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Start");
   [[TDLDownloadList sharedList] loadDownloadsFromDisk];
@@ -46,6 +53,40 @@
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Loaded %lu downloads", (unsigned long)[_downloads count]);
   [[self tableView] reloadData];
 }
+
+- (void)openDownload:(TDLDownload *)download {
+  if (!download) return;
+  
+  NSString *contentType = [download contentType];
+  if ([contentType hasPrefix:@"image/"]) {
+    TDLImageViewController *imageVC = [[TDLImageViewController alloc] initWithDownload:download];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:imageVC];
+    [self presentModalViewController:nav animated:YES];
+    [imageVC release];
+    [nav release];
+  } else if ([contentType hasPrefix:@"video/"]) {
+    NSURL *url = [NSURL fileURLWithPath:[download filePath]];
+    TDLPlayerViewController *playerVC = [[TDLPlayerViewController alloc] initWithContentURL:url];
+    [self presentModalViewController:playerVC animated:YES];
+    [playerVC play];
+    [playerVC release];
+  } else if ([contentType hasPrefix:@"text/"] || [contentType containsString:@"xml"] || [contentType containsString:@"json"]) {
+    TDLTextViewController *textVC = [[TDLTextViewController alloc] initWithDownload:download];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:textVC];
+    [self presentModalViewController:nav animated:YES];
+    [textVC release];
+    [nav release];
+  } else {
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Cannot Open" 
+                                                    message:@"This file type is not supported for viewing yet." 
+                                                   delegate:nil 
+                                          cancelButtonTitle:@"OK" 
+                                          otherButtonTitles:nil];
+    [alert show];
+    [alert release];
+  }
+}
+
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -62,21 +103,31 @@
   if (cell == nil) {
     cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle 
                                    reuseIdentifier:CellIdentifier] autorelease];
+    [cell setAccessoryType:UITableViewCellAccessoryDetailButton];
   }
   
   TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
   [[cell textLabel] setText:[download displayName]];
   
-  NSString *status = @"Unknown";
-  switch ([download state]) {
-    case TDLDownloadStatePending: status = @"Pending"; break;
-    case TDLDownloadStateDownloading: status = @"Downloading..."; break;
-    case TDLDownloadStateFinished: status = @"Finished"; break;
-    case TDLDownloadStateFailed: status = @"Failed"; break;
-  }
-  [[cell detailTextLabel] setText:status];
+  long kb = (long)([download actualSize] / 1024);
+  NSString *type = [download contentType] ? [download contentType] : @"unknown";
+  
+  NSString *detail = [NSString stringWithFormat:@"%ld KB | %@", kb, type];
+  [[cell detailTextLabel] setText:detail];
   
   return cell;
+}
+
+- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
+  return YES;
+}
+
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+  if (editingStyle == UITableViewCellEditingStyleDelete) {
+    TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
+    [[TDLDownloadList sharedList] deleteDownload:download];
+    [self refreshDownloads];
+  }
 }
 
 #pragma mark - Table view delegate
@@ -84,47 +135,17 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
   [tableView deselectRowAtIndexPath:indexPath animated:YES];
   
-  [_selectedDownload release];
-  _selectedDownload = [[_downloads objectAtIndex:[indexPath row]] retain];
-  
-  UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Download Actions"
-                                                           delegate:self
-                                                  cancelButtonTitle:@"Cancel"
-                                             destructiveButtonTitle:nil
-                                                  otherButtonTitles:@"Button 1", @"Button 2", nil];
-  
-  if ([[_selectedDownload contentType] hasPrefix:@"image/"]) {
-    [actionSheet addButtonWithTitle:@"View Image"];
-  }
-  
-  if ([[_selectedDownload contentType] hasPrefix:@"video/"]) {
-    [actionSheet addButtonWithTitle:@"Play"];
-  }
-  
-  [actionSheet showInView:[self view]];
-  [actionSheet release];
+  TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
+  [self openDownload:download];
 }
 
-#pragma mark - UIActionSheetDelegate
-
-- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
-  NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
-  NSLog(@"[TDLDownloadTableViewController actionSheet:clickedButtonAtIndex:] title: %@, index: %ld", 
-        title, (long)buttonIndex);
-  
-  if ([title isEqualToString:@"View Image"]) {
-    TDLImageViewController *imageVC = [[TDLImageViewController alloc] initWithDownload:_selectedDownload];
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:imageVC];
-    [self presentModalViewController:nav animated:YES];
-    [imageVC release];
-    [nav release];
-  } else if ([title isEqualToString:@"Play"]) {
-    NSURL *url = [NSURL fileURLWithPath:[_selectedDownload filePath]];
-    TDLPlayerViewController *playerVC = [[TDLPlayerViewController alloc] initWithContentURL:url];
-    [self presentModalViewController:playerVC animated:YES];
-    [playerVC play];
-    [playerVC release];
-  }
+- (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
+  TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
+  TDLDownloadInfoViewController *infoVC = [[TDLDownloadInfoViewController alloc] initWithDownload:download];
+  UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:infoVC];
+  [self presentModalViewController:nav animated:YES];
+  [infoVC release];
+  [nav release];
 }
 
 @end

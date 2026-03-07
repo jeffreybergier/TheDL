@@ -1,4 +1,5 @@
 #import "TDLDownload.h"
+#import "TDLDownloadList.h"
 
 static NSString *const kUdidKey = @"udid";
 static NSString *const kDisplayNameKey = @"displayName";
@@ -29,7 +30,15 @@ static NSString *const kErrorMsgKey = @"errorMessage";
   if (self) {
     _udid = [[dict objectForKey:kUdidKey] copy];
     _displayName = [[dict objectForKey:kDisplayNameKey] copy];
-    _filePath = [[dict objectForKey:kFilePathKey] copy];
+    
+    // SURVIVE CONTAINER MOVES:
+    // Plist stores relative filename. We reconstruct absolute path for the CURRENT container.
+    NSString *fileName = [dict objectForKey:kFilePathKey];
+    if (fileName) {
+      NSString *downloadsDir = [TDLDownloadList downloadsDirectory];
+      _filePath = [[downloadsDir stringByAppendingPathComponent:fileName] copy];
+    }
+    
     _contentType = [[dict objectForKey:kContentTypeKey] copy];
     _requestURL = [[dict objectForKey:kRequestURLKey] copy];
     _responseURL = [[dict objectForKey:kResponseURLKey] copy];
@@ -46,7 +55,13 @@ static NSString *const kErrorMsgKey = @"errorMessage";
   NSMutableDictionary *dict = [NSMutableDictionary dictionary];
   if (_udid) [dict setObject:_udid forKey:kUdidKey];
   if (_displayName) [dict setObject:_displayName forKey:kDisplayNameKey];
-  if (_filePath) [dict setObject:_filePath forKey:kFilePathKey];
+  
+  // SURVIVE CONTAINER MOVES:
+  // Only save the filename, not the absolute path which will break if container changes.
+  if (_filePath) {
+    [dict setObject:[_filePath lastPathComponent] forKey:kFilePathKey];
+  }
+  
   if (_contentType) [dict setObject:_contentType forKey:kContentTypeKey];
   if (_requestURL) [dict setObject:_requestURL forKey:kRequestURLKey];
   if (_responseURL) [dict setObject:_responseURL forKey:kResponseURLKey];

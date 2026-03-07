@@ -16,6 +16,7 @@
 /**
  * Returns the path to the directory where downloads are stored.
  */
++ (NSString *)downloadsDirectory;
 - (NSString *)downloadsDirectory;
 
 /**
@@ -44,5 +45,10 @@
  * Persists a download object's metadata to disk.
  */
 - (void)saveDownload:(TDLDownload *)download;
+
+/**
+ * Deletes a download object and its files from disk.
+ */
+- (void)deleteDownload:(TDLDownload *)download;
 
 @end

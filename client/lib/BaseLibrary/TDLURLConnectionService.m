@@ -46,15 +46,14 @@
     [download setRequestURL:[url absoluteString]];
     [download setServiceIdentifier:[self serviceIdentifier]];
     [download setState:TDLDownloadStateDownloading];
-    [download setDisplayName:[[url absoluteString] lastPathComponent]];
+    [download setDisplayName:[[url path] lastPathComponent]];
     
-    NSString *host = [url host] ? [url host] : @"unknown";
-    NSString *lastComponent = [url lastPathComponent];
-    if (!lastComponent || [lastComponent length] == 0 || [lastComponent isEqualToString:@"/"]) {
-      lastComponent = @"download.data";
+    NSString *extension = [[url path] pathExtension];
+    if (!extension || [extension length] == 0) {
+      extension = @"data";
     }
     
-    NSString *fileName = [NSString stringWithFormat:@"%@-%@", host, lastComponent];
+    NSString *fileName = [[download udid] stringByAppendingPathExtension:extension];
     NSString *downloadsDir = [[TDLDownloadList sharedList] downloadsDirectory];
     NSString *dataPath = [downloadsDir stringByAppendingPathComponent:fileName];
     [download setFilePath:dataPath];
