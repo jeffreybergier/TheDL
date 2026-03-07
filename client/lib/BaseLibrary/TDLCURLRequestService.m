@@ -53,12 +53,19 @@
   NSString *downloadsDir = [TDLDownloadList downloadsDirectory];
   NSString *dataPath = [downloadsDir stringByAppendingPathComponent:lastComponent];
   
-  // Deduplicate
+  // Deduplicate using " (2)" format
   if ([[NSFileManager defaultManager] fileExistsAtPath:dataPath]) {
-    NSString *timestamp = [NSString stringWithFormat:@"-%ld", (long)[[NSDate date] timeIntervalSince1970]];
     NSString *base = [lastComponent stringByDeletingPathExtension];
     NSString *ext = [lastComponent pathExtension];
-    dataPath = [downloadsDir stringByAppendingPathComponent:[[base stringByAppendingString:timestamp] stringByAppendingPathExtension:ext]];
+    int counter = 2;
+    while ([[NSFileManager defaultManager] fileExistsAtPath:dataPath]) {
+      NSString *newName = [NSString stringWithFormat:@"%@ (%d)", base, counter];
+      if ([ext length] > 0) {
+        newName = [newName stringByAppendingPathExtension:ext];
+      }
+      dataPath = [downloadsDir stringByAppendingPathComponent:newName];
+      counter++;
+    }
   }
   
   // Ensure directory exists

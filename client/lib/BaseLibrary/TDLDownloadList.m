@@ -48,12 +48,18 @@
   
   // Sort using the pre-fetched modification date
   NSArray *sortedFiles = [files sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
-    NSDate *date1, *date2;
+    NSDate *date1 = nil, *date2 = nil;
     [obj1 getResourceValue:&date1 forKey:NSURLContentModificationDateKey error:nil];
     [obj2 getResourceValue:&date2 forKey:NSURLContentModificationDateKey error:nil];
     
-    // Newest first
-    return [date2 compare:date1];
+    if (date1 && date2) {
+      return [date2 compare:date1];
+    } else if (date1) {
+      return NSOrderedAscending;
+    } else if (date2) {
+      return NSOrderedDescending;
+    }
+    return NSOrderedSame;
   }];
   
   return sortedFiles;
