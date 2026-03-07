@@ -7,7 +7,7 @@
  */
 @interface TDLDownloadList : NSObject {
  @private
-  NSMutableDictionary *_downloadCache; // udid -> TDLDownload
+  NSMutableDictionary *_downloadCache; // udid -> TDLDownload (optional cache)
 }
 
 /** Returns the shared singleton instance. */
@@ -20,21 +20,27 @@
 - (NSString *)downloadsDirectory;
 
 /**
- * Loads downloads from disk into the cache.
- */
-- (void)loadDownloadsFromDisk;
-
-/**
- * Returns all downloads managed by the list.
+ * Returns all download metadata URLs (.plist files) sorted by modification date.
  *
- * @return An NSArray of TDLDownload objects.
+ * @return An NSArray of NSURL objects.
  */
 - (NSArray *)allDownloads;
 
 /**
- * Returns a download by its UDID.
+ * Loads and returns a TDLDownload object from a metadata URL.
+ *
+ * @param url The URL to the .plist file.
+ * @return A TDLDownload object, or nil if loading fails.
  */
-- (TDLDownload *)downloadWithUdid:(NSString *)udid;
+- (TDLDownload *)getTDLDownloadForURL:(NSURL *)url;
+
+/**
+ * Loads and returns the raw data associated with a metadata URL.
+ *
+ * @param url The URL to the .plist file.
+ * @return The NSData of the downloaded file, or nil if not found.
+ */
+- (NSData *)getDataForURL:(NSURL *)url;
 
 /**
  * Creates and registers a new download object.

@@ -47,7 +47,6 @@
 
 - (void)refreshDownloads {
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Start");
-  [[TDLDownloadList sharedList] loadDownloadsFromDisk];
   [_downloads release];
   _downloads = [[[TDLDownloadList sharedList] allDownloads] retain];
   NSLog(@"[TDLDownloadTableViewController refreshDownloads] Loaded %lu downloads", (unsigned long)[_downloads count]);
@@ -106,14 +105,26 @@
     [cell setAccessoryType:UITableViewCellAccessoryDetailButton];
   }
   
-  TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
-  [[cell textLabel] setText:[download displayName]];
+  NSURL *plistUrl = [_downloads objectAtIndex:[indexPath row]];
+  TDLDownload *download = [[TDLDownloadList sharedList] getTDLDownloadForURL:plistUrl];
   
-  long kb = (long)([download actualSize] / 1024);
-  NSString *type = [download contentType] ? [download contentType] : @"unknown";
-  
-  NSString *detail = [NSString stringWithFormat:@"%ld KB | %@", kb, type];
-  [[cell detailTextLabel] setText:detail];
+  if (download) {
+    [[cell textLabel] setText:[download displayName]];
+    
+    long kb = (long)([download actualSize] / 1024);
+    NSString *type = [download contentType] ? [download contentType] : @"unknown";
+    
+    // Extract last component of reverse-dns service identifier
+    NSString *service = [[[download serviceIdentifier] componentsSeparatedByString:@"."] lastObject];
+    if (!service) service = @"unknown";
+
+    NSString *detail = [NSString stringWithFormat:@"%ld KB・%@・%@", kb, type, service];
+    [[cell detailTextLabel] setText:detail];
+
+  } else {
+    [[cell textLabel] setText:@"Error loading download"];
+    [[cell detailTextLabel] setText:nil];
+  }
   
   return cell;
 }
@@ -124,8 +135,11 @@
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
   if (editingStyle == UITableViewCellEditingStyleDelete) {
-    TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
-    [[TDLDownloadList sharedList] deleteDownload:download];
+    NSURL *plistUrl = [_downloads objectAtIndex:[indexPath row]];
+    TDLDownload *download = [[TDLDownloadList sharedList] getTDLDownloadForURL:plistUrl];
+    if (download) {
+      [[TDLDownloadList sharedList] deleteDownload:download];
+    }
     [self refreshDownloads];
   }
 }
@@ -135,17 +149,23 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
   [tableView deselectRowAtIndexPath:indexPath animated:YES];
   
-  TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
-  [self openDownload:download];
+  NSURL *plistUrl = [_downloads objectAtIndex:[indexPath row]];
+  TDLDownload *download = [[TDLDownloadList sharedList] getTDLDownloadForURL:plistUrl];
+  if (download) {
+    [self openDownload:download];
+  }
 }
 
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
-  TDLDownload *download = [_downloads objectAtIndex:[indexPath row]];
-  TDLDownloadInfoViewController *infoVC = [[TDLDownloadInfoViewController alloc] initWithDownload:download];
-  UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:infoVC];
-  [self presentModalViewController:nav animated:YES];
-  [infoVC release];
-  [nav release];
+  NSURL *plistUrl = [_downloads objectAtIndex:[indexPath row]];
+  TDLDownload *download = [[TDLDownloadList sharedList] getTDLDownloadForURL:plistUrl];
+  if (download) {
+    TDLDownloadInfoViewController *infoVC = [[TDLDownloadInfoViewController alloc] initWithDownload:download];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:infoVC];
+    [self presentModalViewController:nav animated:YES];
+    [infoVC release];
+    [nav release];
+  }
 }
 
 @end

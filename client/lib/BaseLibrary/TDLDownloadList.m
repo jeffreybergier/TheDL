@@ -16,7 +16,6 @@
   self = [super init];
   if (self) {
     _downloadCache = [[NSMutableDictionary alloc] init];
-    [self loadDownloadsFromDisk];
   }
   return self;
 }
@@ -36,51 +35,66 @@
   return [TDLDownloadList downloadsDirectory];
 }
 
-- (void)loadDownloadsFromDisk {
-  [_downloadCache removeAllObjects];
-  
+- (NSArray *)allDownloads {
   NSString *downloadsPath = [TDLDownloadList downloadsDirectory];
   NSFileManager *fileManager = [NSFileManager defaultManager];
   
-  NSLog(@"[TDLDownloadList] loadDownloadsFromDisk: path=%@", downloadsPath);
-  
   BOOL isDir = NO;
   if (![fileManager fileExistsAtPath:downloadsPath isDirectory:&isDir] || !isDir) {
-    return;
+    return [NSArray array];
   }
   
   NSArray *files = [fileManager contentsOfDirectoryAtPath:downloadsPath error:nil];
-  if (files) {
-    NSEnumerator *e = [files objectEnumerator];
-    NSString *file;
-    while ((file = [e nextObject])) {
-      if ([[file pathExtension] isEqualToString:@"plist"]) {
-        NSString *fullPath = [downloadsPath stringByAppendingPathComponent:file];
-        NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:fullPath];
-        if (dict) {
-          TDLDownload *download = [[TDLDownload alloc] initWithDictionary:dict];
-          if ([download udid]) {
-            [_downloadCache setObject:download forKey:[download udid]];
-          }
-          [download release];
-        }
-      }
+  if (!files) return [NSArray array];
+  
+  NSMutableArray *plistUrls = [NSMutableArray array];
+  NSEnumerator *e = [files objectEnumerator];
+  NSString *file;
+  while ((file = [e nextObject])) {
+    if ([[file pathExtension] isEqualToString:@"plist"]) {
+      NSURL *url = [NSURL fileURLWithPath:[downloadsPath stringByAppendingPathComponent:file]];
+      [plistUrls addObject:url];
     }
   }
-  NSLog(@"[TDLDownloadList] loadDownloadsFromDisk: loaded %lu objects", (unsigned long)[_downloadCache count]);
+  
+  // Sort by modification date
+  [plistUrls sortUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+    NSURL *url1 = (NSURL *)obj1;
+    NSURL *url2 = (NSURL *)obj2;
+    
+    NSDictionary *attr1 = [[NSFileManager defaultManager] attributesOfItemAtPath:[url1 path] error:nil];
+    NSDictionary *attr2 = [[NSFileManager defaultManager] attributesOfItemAtPath:[url2 path] error:nil];
+    
+    NSDate *date1 = [attr1 fileModificationDate];
+    NSDate *date2 = [attr2 fileModificationDate];
+    
+    // Decending order (newest first)
+    return [date2 compare:date1];
+  }];
+  
+  return plistUrls;
 }
 
-- (NSArray *)allDownloads {
-  return [_downloadCache allValues];
+- (TDLDownload *)getTDLDownloadForURL:(NSURL *)url {
+  if (!url) return nil;
+  
+  NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:[url path]];
+  if (dict) {
+    return [[[TDLDownload alloc] initWithDictionary:dict] autorelease];
+  }
+  return nil;
 }
 
-- (TDLDownload *)downloadWithUdid:(NSString *)udid {
-  return [_downloadCache objectForKey:udid];
+- (NSData *)getDataForURL:(NSURL *)url {
+  TDLDownload *download = [self getTDLDownloadForURL:url];
+  if (download && [download filePath]) {
+    return [NSData dataWithContentsOfFile:[download filePath]];
+  }
+  return nil;
 }
 
 - (TDLDownload *)createDownload {
   NSString *rawUdid = [[NSProcessInfo processInfo] globallyUniqueString];
-  // Make it a bit cleaner by stripping dashes and taking a reasonable length
   NSString *udid = [[rawUdid stringByReplacingOccurrencesOfString:@"-" withString:@""] lowercaseString];
   if ([udid length] > 12) {
     udid = [udid substringToIndex:12];
@@ -89,7 +103,7 @@
   TDLDownload *download = [[TDLDownload alloc] init];
   [download setUdid:udid];
   
-  [_downloadCache setObject:download forKey:udid];
+  // Cache it temporarily if needed, but we mainly rely on disk now
   [self saveDownload:download];
   
   return [download autorelease];
@@ -118,8 +132,6 @@
   NSString *downloadsPath = [TDLDownloadList downloadsDirectory];
   NSFileManager *fileManager = [NSFileManager defaultManager];
   
-  NSLog(@"[TDLDownloadList] deleteDownload: %@", [download udid]);
-  
   // Delete Plist
   NSString *plistName = [[download udid] stringByAppendingPathExtension:@"plist"];
   NSString *plistPath = [downloadsPath stringByAppendingPathComponent:plistName];
@@ -127,11 +139,8 @@
   
   // Delete Data File
   if ([download filePath]) {
-    NSLog(@"[TDLDownloadList] Removing data file: %@", [download filePath]);
     [fileManager removeItemAtPath:[download filePath] error:nil];
   }
-  
-  [_downloadCache removeObjectForKey:[download udid]];
 }
 
 @end
