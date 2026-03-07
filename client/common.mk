@@ -31,9 +31,9 @@ ifeq ($(HAS_OSXCROSS), 1)
   RANLIB = $(OSXCROSS_PATH)/bin/x86_64-apple-darwin14-ranlib
   
   # Architectures & Flags
-  IOS_ARCHS = -target apple-ios$(IOS_MIN) -arch armv7 -arch armv7s -arch arm64
-  SIM_ARCHS = -target i386-apple-ios8.0-simulator
-  MAC_ARCHS = -target apple-macosx$(MAC_MIN) -arch x86_64 -arch i386
+  IOS_ARCHS = -target apple-ios$(IOS_MIN) -arch armv7 -arch armv7s -arch arm64 -DTHEDL_CURL_ENABLED=1
+  SIM_ARCHS = -target i386-apple-ios8.0-simulator -DTHEDL_CURL_ENABLED=0
+  MAC_ARCHS = -target apple-macosx$(MAC_MIN) -arch x86_64 -arch i386 -DTHEDL_CURL_ENABLED=1
   SIM_FLAGS = -miphoneos-version-min=$(IOS_MIN)
 
   # Framework Paths for tests
@@ -61,9 +61,9 @@ else
   RANLIB = ranlib
 
   # Architectures & Flags
-  IOS_ARCHS = -arch armv7 -arch armv7s -arch arm64
-  SIM_ARCHS = -arch i386
-  MAC_ARCHS = -arch x86_64 -arch i386
+  IOS_ARCHS = -arch armv7 -arch armv7s -arch arm64 -DTHEDL_CURL_ENABLED=1
+  SIM_ARCHS = -arch i386 -DTHEDL_CURL_ENABLED=0
+  MAC_ARCHS = -arch x86_64 -arch i386 -DTHEDL_CURL_ENABLED=1
   SIM_FLAGS = -mios-simulator-version-min=$(IOS_MIN)
   
   # Framework Paths for tests
@@ -98,10 +98,9 @@ WARN_FLAGS = -Wall
 CLANG_WARN_FLAGS = $(WARN_FLAGS) -Wno-error=deprecated-declarations -Wno-unused-command-line-argument
 
 COMMON_FW = -ObjC -framework Foundation -framework CoreData
-# Defaults: Enabled for iOS device and Mac, Disabled for Sim (until Phase 4)
-IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=1
-MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=1
-SIM_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore -DTHEDL_CURL_ENABLED=0
+IOS_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore
+MAC_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework AppKit -framework Cocoa -framework AVFoundation -framework QuartzCore
+SIM_FW = $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(COMMON_FW) -framework UIKit -framework MediaPlayer -framework AVFoundation -framework QuartzCore
 TEST_FW = -framework XCTest
 
 # Standard CFLAGS

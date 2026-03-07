@@ -1,20 +1,26 @@
 #import "CrossPlatform.h"
+#import "XPObject.h"
 
 #if TARGET_OS_IPHONE
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/QuartzCore.h>
+#endif
+
 #if THEDL_CURL_ENABLED
 #import <curl/curl.h>
 #import <openssl/opensslv.h>
 #import <zlib.h>
-#endif
 #endif
 
 void XPLogLibraryVersions() {
   NSLog(@"--- Library Versions ---");
 #if TARGET_OS_IPHONE
   NSLog(@"[OS] iOS %@", [[UIDevice currentDevice] systemVersion]);
+#else
+  NSLog(@"[OS] macOS %@", [[NSProcessInfo processInfo] operatingSystemVersionString]);
+#endif
+
 #if THEDL_CURL_ENABLED
   NSLog(@"[CURL] %s", curl_version());
   NSLog(@"[OpenSSL] %s", OPENSSL_VERSION_TEXT);
@@ -22,11 +28,16 @@ void XPLogLibraryVersions() {
 #else
   NSLog(@"[CURL] Disabled");
 #endif
-#else
-  NSLog(@"[OS] macOS (Legacy)");
-#endif
   NSLog(@"------------------------");
 }
+
+#if TARGET_OS_IPHONE
+@implementation XPViewController
+- (void)viewDidLoad {
+  [super viewDidLoad];
+  NSLog(@"[XPViewController viewDidLoad]");
+}
+@end
 
 @implementation XPPlayerViewController
 
@@ -34,135 +45,82 @@ void XPLogLibraryVersions() {
   self = [super init];
   if (self) {
     _contentURL = [url retain];
-    NSLog(@"[XPPlayerViewController initWithContentURL:] URL: %@", url);
+    _player = [[MPMoviePlayerController alloc] initWithContentURL:_contentURL];
   }
   return self;
 }
 
 - (void)dealloc {
-#if TARGET_OS_IPHONE
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
-#endif
   [_contentURL release];
   [_player release];
-  [_playerLayer release];
   [super dealloc];
 }
 
-#if TARGET_OS_IPHONE
-- (void)loadView {
-  UIView *view = [[UIView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-  [view setBackgroundColor:[UIColor blackColor]];
-  [self setView:view];
-  [view release];
-}
-
-- (void)viewDidLoad {
-  [super viewDidLoad];
-  
-  // Verify file existence if it's a local file
-  if ([_contentURL isFileURL]) {
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if (![fm fileExistsAtPath:[_contentURL path]]) {
-      NSLog(@"[XPPlayerViewController viewDidLoad] ERROR: File does not exist at path: %@", [_contentURL path]);
-    } else {
-      NSDictionary *attrs = [fm attributesOfItemAtPath:[_contentURL path] error:nil];
-      NSLog(@"[XPPlayerViewController viewDidLoad] File exists, size: %@", [attrs objectForKey:NSFileSize]);
-    }
-  }
-
-  // Check for AVPlayer availability (iOS 4.0+)
-  if (NSClassFromString(@"AVPlayer")) {
-    NSLog(@"[XPPlayerViewController viewDidLoad] Using AVPlayer");
-    _player = [[AVPlayer alloc] initWithURL:_contentURL];
-    _playerLayer = [[AVPlayerLayer playerLayerWithPlayer:_player] retain];
-    [(AVPlayerLayer *)_playerLayer setFrame:[[self view] bounds]];
-    [(AVPlayerLayer *)_playerLayer setVideoGravity:AVLayerVideoGravityResizeAspect];
-    [[[self view] layer] addSublayer:_playerLayer];
-    
-    // Add a simple tap-to-dismiss
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(stop)];
-    [[self view] addGestureRecognizer:tap];
-    [tap release];
-  } else {
-    // Fallback to MPMoviePlayerController (iOS 3.1)
-    NSLog(@"[XPPlayerViewController viewDidLoad] Using MPMoviePlayerController");
-    _player = [[MPMoviePlayerController alloc] initWithContentURL:_contentURL];
-    
-    // For 3.1, we might need to add the view manually if it's not full-screen
-    if ([_player respondsToSelector:@selector(view)]) {
-        UIView *playerView = [_player performSelector:@selector(view)];
-        [playerView setFrame:[[self view] bounds]];
-        [[self view] addSubview:playerView];
-    }
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(playerFinished:)
-                                                 name:MPMoviePlayerPlaybackDidFinishNotification
-                                               object:_player];
-  }
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    [self play];
-}
-#endif
-
 - (void)play {
-  NSLog(@"[XPPlayerViewController play] Triggering playback...");
-  if ([_player respondsToSelector:@selector(play)]) {
-    [_player performSelector:@selector(play)];
-  }
+  NSLog(@"[XPPlayerViewController play] %@", _contentURL);
+  [_player setFullscreen:YES];
+  [_player play];
 }
 
 - (void)stop {
-  NSLog(@"[XPPlayerViewController stop] Stopping playback and dismissing.");
-#if TARGET_OS_IPHONE
+  NSLog(@"[XPPlayerViewController stop] Stopping playback.");
   if ([_player respondsToSelector:@selector(pause)]) {
     [_player performSelector:@selector(pause)];
   } else if ([_player respondsToSelector:@selector(stop)]) {
     [_player performSelector:@selector(stop)];
   }
-  
-  if ([self respondsToSelector:@selector(presentingViewController)] && [self presentingViewController]) {
-    [self dismissModalViewControllerAnimated:YES];
-  } else if ([self parentViewController]) {
-    [self dismissModalViewControllerAnimated:YES];
-  }
-#endif
 }
-
-#if TARGET_OS_IPHONE
-- (void)playerFinished:(NSNotification *)note {
-  NSLog(@"[XPPlayerViewController playerFinished:] Reason: %@", [[note userInfo] objectForKey:MPMoviePlayerPlaybackDidFinishReasonUserInfoKey]);
-  [self stop];
-}
-#endif
 
 @end
+#else
+// Mac stubs for classes defined as macros/typedefs in header
+@implementation XPPlayerViewController
+- (id)initWithContentURL:(NSURL *)url {
+  self = [super init];
+  return self;
+}
+- (void)stop {}
+- (void)play {}
+@end
+#endif
 
 @implementation NSFileManager (CrossPlatform)
-
-- (NSArray *)XP_contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
-#if TARGET_OS_IPHONE || __MAC_OS_X_VERSION_MIN_REQUIRED >= 1050
-  return [self contentsOfDirectoryAtPath:path error:error];
-#else
-  return [self directoryContentsAtPath:path];
-#endif
-}
 
 - (BOOL)XP_createDirectoryAtPath:(NSString *)path 
      withIntermediateDirectories:(BOOL)createIntermediates 
                       attributes:(NSDictionary *)attributes 
                            error:(NSError **)error {
-#if TARGET_OS_IPHONE || __MAC_OS_X_VERSION_MIN_REQUIRED >= 1050
-  return [self createDirectoryAtPath:path 
-         withIntermediateDirectories:createIntermediates 
-                          attributes:attributes 
-                               error:error];
+#if TARGET_OS_IPHONE
+  return [self createDirectoryAtPath:path withIntermediateDirectories:createIntermediates attributes:attributes error:error];
 #else
-  return [self createDirectoryAtPath:path attributes:attributes];
+  // 10.4 Tiger compatibility
+  if (createIntermediates) {
+    // Basic implementation for 10.4
+    NSArray *components = [path pathComponents];
+    NSString *currentPath = @"";
+    NSEnumerator *enumerator = [components objectEnumerator];
+    NSString *component;
+    while ((component = [enumerator nextObject])) {
+      currentPath = [currentPath stringByAppendingPathComponent:component];
+      if (![self fileExistsAtPath:currentPath]) {
+        if (![self createDirectoryAtPath:currentPath attributes:attributes]) {
+          return NO;
+        }
+      }
+    }
+    return YES;
+  } else {
+    return [self createDirectoryAtPath:path attributes:attributes];
+  }
+#endif
+}
+
+- (NSArray *)XP_contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
+#if TARGET_OS_IPHONE
+  return [self contentsOfDirectoryAtPath:path error:error];
+#else
+  // 10.4 Tiger compatibility
+  return [self directoryContentsAtPath:path];
 #endif
 }
 
