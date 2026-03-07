@@ -71,6 +71,19 @@
   if (!fileURL) return;
   
   TDLDownload *metadata = [[TDLDownloadList sharedList] getTDLDownloadForURL:fileURL];
+  
+  // Prevent opening if there's an error
+  if ([metadata errorMessage]) {
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Download Error" 
+                                                    message:[metadata errorMessage]
+                                                   delegate:nil 
+                                          cancelButtonTitle:@"OK" 
+                                          otherButtonTitles:nil];
+    [alert show];
+    [alert release];
+    return;
+  }
+  
   NSString *contentType = [metadata contentType];
   
   if ([contentType hasPrefix:@"image/"]) {
@@ -135,9 +148,13 @@
   NSString *service = [[[metadata serviceIdentifier] componentsSeparatedByString:@"."] lastObject];
   if (!service) service = @"none";
 
-  NSString *detail = [NSString stringWithFormat:@"%ld KB・%@・%@", kb, type, service];
+  NSString *detail;
+  if ([metadata errorMessage]) {
+    detail = [NSString stringWithFormat:@"⚠️ %@", [metadata errorMessage]];
+  } else {
+    detail = [NSString stringWithFormat:@"%ld KB・%@・%@", kb, type, service];
+  }
   [[cell detailTextLabel] setText:detail];
-  
   return cell;
 }
 

@@ -23,7 +23,7 @@
                                   initWithBarButtonSystemItem:UIBarButtonSystemItemDone 
                                   target:self 
                                   action:@selector(dismiss)];
-  [[self navigationItem] setLeftBarButtonItem:doneButton];
+  [[self navigationItem] setRightBarButtonItem:doneButton];
   [doneButton release];
 }
 
