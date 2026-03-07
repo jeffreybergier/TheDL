@@ -57,8 +57,12 @@
   NSString *dataPath = [downloadsDir stringByAppendingPathComponent:fileName];
   [download setFilePath:dataPath];
   
-  // Ensure file exists
-  [[NSData data] writeToFile:dataPath atomically:YES];
+  // Ensure directory exists
+  [[NSFileManager defaultManager] createDirectoryAtPath:downloadsDir 
+                            withIntermediateDirectories:YES 
+                                             attributes:nil 
+                                                  error:NULL];
+  
   [[TDLDownloadList sharedList] saveDownload:download];
   [_taskList addObject:download];
 
@@ -77,11 +81,13 @@
   
   NSError *error = nil;
   NSURL *url = [NSURL URLWithString:[download requestURL]];
+  NSDictionary *responseHeaders = nil;
   
   NSData *responseData = [XPCURLRequest performRequestWithURL:url
                                                        method:@"GET"
                                                       headers:nil
                                                          body:nil
+                                              responseHeaders:&responseHeaders
                                                         error:&error];
   
   if (error) {
@@ -92,7 +98,21 @@
     NSLog(@"[TDLCURLRequestService] Finished: %@", [download udid]);
     
     // Save data
-    [responseData writeToFile:[download filePath] atomically:YES];
+    BOOL success = [responseData writeToFile:[download filePath] atomically:YES];
+    if (!success) {
+      NSLog(@"[TDLCURLRequestService] ERROR: Could not write data to path: %@", [download filePath]);
+    }
+    
+    // Set metadata from headers
+    NSString *contentType = [responseHeaders objectForKey:@"Content-Type"];
+    if (contentType) {
+      // Strip charset if present
+      NSRange semicolonRange = [contentType rangeOfString:@";"];
+      if (semicolonRange.location != NSNotFound) {
+        contentType = [contentType substringToIndex:semicolonRange.location];
+      }
+      [download setContentType:contentType];
+    }
     
     [download setActualSize:[responseData length]];
     [download setContentSize:[responseData length]];

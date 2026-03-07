@@ -16,6 +16,7 @@
  * @param method The HTTP method (e.g., "GET", "POST").
  * @param headers A dictionary of HTTP headers.
  * @param body The request body data, or nil.
+ * @param outResponseHeaders Pointer to an NSDictionary pointer to be set with response headers.
  * @param outError Pointer to an NSError object to be set if an error occurs.
  * @return The response data, or nil if an error occurred.
  */
@@ -23,6 +24,7 @@
                            method:(NSString *)method
                           headers:(NSDictionary *)headers
                              body:(NSData *)body
+                  responseHeaders:(NSDictionary **)outResponseHeaders
                             error:(NSError **)outError;
 
 @end
