@@ -39,30 +39,6 @@ typedef NSTextAlignment XPTextAlignment;
  */
 void XPLogLibraryVersions(void);
 
-/**
- * A cross-platform video player view controller.
- * Uses MPMoviePlayerController on iOS 3.1 and AVPlayer on iOS 4.0+.
- */
-@interface XPPlayerViewController : XPViewController {
- @private
-  NSURL *_contentURL;
-  id _player;      // MPMoviePlayerController or AVPlayer
-  id _playerLayer; // AVPlayerLayer (iOS 4+)
-}
-
-/**
- * Initializes the player with a content URL.
- */
-- (id)initWithContentURL:(NSURL *)url;
-
-/** Starts playback. */
-- (void)play;
-
-/** Stops playback. */
-- (void)stop;
-
-@end
-
 @interface NSFileManager (CrossPlatform)
 
 /**

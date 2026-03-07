@@ -2,9 +2,7 @@
 #import "XPObject.h"
 
 #if TARGET_OS_IPHONE
-#import <MediaPlayer/MediaPlayer.h>
-#import <AVFoundation/AVFoundation.h>
-#import <QuartzCore/QuartzCore.h>
+#import <UIKit/UIKit.h>
 #endif
 
 #if THEDL_CURL_ENABLED
@@ -37,50 +35,6 @@ void XPLogLibraryVersions() {
   [super viewDidLoad];
   NSLog(@"[XPViewController viewDidLoad]");
 }
-@end
-
-@implementation XPPlayerViewController
-
-- (id)initWithContentURL:(NSURL *)url {
-  self = [super init];
-  if (self) {
-    _contentURL = [url retain];
-    _player = [[MPMoviePlayerController alloc] initWithContentURL:_contentURL];
-  }
-  return self;
-}
-
-- (void)dealloc {
-  [_contentURL release];
-  [_player release];
-  [super dealloc];
-}
-
-- (void)play {
-  NSLog(@"[XPPlayerViewController play] %@", _contentURL);
-  [_player setFullscreen:YES];
-  [_player play];
-}
-
-- (void)stop {
-  NSLog(@"[XPPlayerViewController stop] Stopping playback.");
-  if ([_player respondsToSelector:@selector(pause)]) {
-    [_player performSelector:@selector(pause)];
-  } else if ([_player respondsToSelector:@selector(stop)]) {
-    [_player performSelector:@selector(stop)];
-  }
-}
-
-@end
-#else
-// Mac stubs for classes defined as macros/typedefs in header
-@implementation XPPlayerViewController
-- (id)initWithContentURL:(NSURL *)url {
-  self = [super init];
-  return self;
-}
-- (void)stop {}
-- (void)play {}
 @end
 #endif
 

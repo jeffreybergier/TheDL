@@ -2,6 +2,7 @@
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
 #import "TDLImageViewController.h"
+#import "TDLPlayerViewController.h"
 #import "CrossPlatform.h"
 
 @implementation TDLDownloadTableViewController
@@ -119,7 +120,7 @@
     [nav release];
   } else if ([title isEqualToString:@"Play"]) {
     NSURL *url = [NSURL fileURLWithPath:[_selectedDownload filePath]];
-    XPPlayerViewController *playerVC = [[XPPlayerViewController alloc] initWithContentURL:url];
+    TDLPlayerViewController *playerVC = [[TDLPlayerViewController alloc] initWithContentURL:url];
     [self presentModalViewController:playerVC animated:YES];
     [playerVC play];
     [playerVC release];

@@ -13,7 +13,7 @@ SRCS = ios_main.m AppDelegate.m RootViewController.m \
         TDLDownloadTableViewController.m TDLServiceListViewController.m \
         TDLURLConnectionServiceTableViewController.m \
         TDLCURLRequestServiceTableViewController.m \
-        TDLImageViewController.m
+        TDLImageViewController.m TDLPlayerViewController.m
 TEST_SRCS = tests/test_iphone_main.m
 
 # Build Rules
