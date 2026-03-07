@@ -63,7 +63,8 @@ else
   # Architectures & Flags
   IOS_ARCHS = -arch armv7 -arch armv7s -arch arm64 -DTHEDL_CURL_ENABLED=1
   SIM_ARCHS = -arch i386 -DTHEDL_CURL_ENABLED=1
-  MAC_ARCHS = -arch x86_64 -arch i386 -DTHEDL_CURL_ENABLED=1
+  # Restricted to i386 on Mavericks due to ld64 assertion failure with custom x86_64 static libs
+  MAC_ARCHS = -arch i386 -DTHEDL_CURL_ENABLED=1
   SIM_FLAGS = -mios-simulator-version-min=$(IOS_MIN)
   
   # Framework Paths for tests
