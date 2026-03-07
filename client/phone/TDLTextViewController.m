@@ -43,13 +43,25 @@
 
 - (void)loadText {
   NSError *error = nil;
-  NSString *content = [NSString stringWithContentsOfFile:[_downloadURL path] 
-                                                encoding:NSUTF8StringEncoding 
-                                                   error:&error];
+  NSString *content = nil;
+  
+  // Try UTF-8 first
+  content = [NSString stringWithContentsOfFile:[_downloadURL path] 
+                                      encoding:NSUTF8StringEncoding 
+                                         error:&error];
+  
+  // Fallback to ASCII/Windows-1252 if UTF-8 fails
+  if (!content) {
+    content = [NSString stringWithContentsOfFile:[_downloadURL path] 
+                                        encoding:NSWindowsCP1252StringEncoding 
+                                           error:nil];
+  }
+  
   if (content) {
     [_textView setText:content];
   } else {
-    [_textView setText:[NSString stringWithFormat:@"Error loading text: %@", [error localizedDescription]]];
+    NSString *errorMsg = [error localizedDescription] ? [error localizedDescription] : @"Unknown encoding error";
+    [_textView setText:[NSString stringWithFormat:@"Error loading text: %@", errorMsg]];
   }
 }
 

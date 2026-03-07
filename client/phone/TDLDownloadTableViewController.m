@@ -98,8 +98,11 @@
     [[playerVC moviePlayer] setScalingMode:MPMovieScalingModeAspectFit];
     [self presentMoviePlayerViewControllerAnimated:playerVC];
     [playerVC release];
-  } else if ([contentType hasPrefix:@"text/"] || [contentType containsString:@"xml"] || [contentType containsString:@"json"]) {
+  } else if ([contentType hasPrefix:@"text/"] || 
+             [contentType rangeOfString:@"xml"].location != NSNotFound || 
+             [contentType rangeOfString:@"json"].location != NSNotFound) {
     TDLTextViewController *textVC = [[TDLTextViewController alloc] initWithDownloadURL:fileURL];
+
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:textVC];
     [self presentModalViewController:nav animated:YES];
     [textVC release];

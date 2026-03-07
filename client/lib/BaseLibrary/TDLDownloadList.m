@@ -1,6 +1,9 @@
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
 #import "CrossPlatform.h"
+#include <sys/xattr.h>
+
+static NSString *const kTDLMetadataXattrName = @"com.kumasan.thedl.metadata";
 
 @implementation TDLDownloadList
 
@@ -68,26 +71,37 @@
 - (TDLDownload *)getTDLDownloadForURL:(NSURL *)url {
   if (!url) return nil;
   
-  // Retro Trick: Access the resource fork via the ..namedfork/rsrc path
-  NSString *resourcePath = [[url path] stringByAppendingPathComponent:@"..namedfork/rsrc"];
+  const char *path = [[url path] fileSystemRepresentation];
+  const char *name = [kTDLMetadataXattrName UTF8String];
   
-  NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:resourcePath];
-  if (dict) {
-    return [[[TDLDownload alloc] initWithDictionary:dict] autorelease];
+  // 1. Get size of attribute
+  ssize_t size = getxattr(path, name, NULL, 0, 0, 0);
+  if (size <= 0) {
+    return [[[TDLDownload alloc] init] autorelease];
   }
   
-  // Fallback: Check if it's a valid download but has no metadata yet
+  // 2. Read attribute data
+  void *buffer = malloc(size);
+  if (getxattr(path, name, buffer, size, 0, 0) == size) {
+    NSData *data = [NSData dataWithBytesNoCopy:buffer length:size freeWhenDone:YES];
+    NSDictionary *dict = [NSPropertyListSerialization propertyListFromData:data 
+                                                          mutabilityOption:NSPropertyListImmutable 
+                                                                    format:NULL 
+                                                          errorDescription:NULL];
+    if (dict) {
+      NSLog(@"[TDLDownloadList] Loaded metadata from xattr: %@", [url lastPathComponent]);
+      return [[[TDLDownload alloc] initWithDictionary:dict] autorelease];
+    }
+  } else {
+    free(buffer);
+  }
+  
   return [[[TDLDownload alloc] init] autorelease];
 }
 
 - (void)saveDownload:(TDLDownload *)download forURL:(NSURL *)url {
   if (!download || !url) return;
   
-  // Retro Trick: Access the resource fork via the ..namedfork/rsrc path
-  NSString *resourcePath = [[url path] stringByAppendingPathComponent:@"..namedfork/rsrc"];
-  
-  // Note: writeToFile:atomically: YES fails on named forks because it can't rename a temp file into a fork.
-  // We must use NSData's non-atomic write or writeToURL.
   NSDictionary *dict = [download dictionaryRepresentation];
   NSString *errorDesc = nil;
   NSData *plistData = [NSPropertyListSerialization dataFromPropertyList:dict 
@@ -95,12 +109,18 @@
                                                        errorDescription:&errorDesc];
   
   if (plistData) {
-    BOOL success = [plistData writeToFile:resourcePath atomically:NO];
-    if (!success) {
-      NSLog(@"[TDLDownloadList] ERROR: Could not write plist data to resource fork at %@", resourcePath);
+    const char *path = [[url path] fileSystemRepresentation];
+    const char *name = [kTDLMetadataXattrName UTF8String];
+    
+    NSLog(@"[TDLDownloadList] ATTEMPTING XATTR SAVE: %s", path);
+    int result = setxattr(path, name, [plistData bytes], [plistData length], 0, 0);
+    if (result == 0) {
+      NSLog(@"[TDLDownloadList] Saved metadata to xattr: %@", [url lastPathComponent]);
+    } else {
+      NSLog(@"[TDLDownloadList] ERROR: Could not write xattr: %d", result);
     }
   } else {
-    NSLog(@"[TDLDownloadList] ERROR: Could not serialize metadata: %@", errorDesc);
+    NSLog(@"[TDLDownloadList] ERROR: Serialization failed: %@", errorDesc);
     [errorDesc release];
   }
 }
