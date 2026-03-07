@@ -16,6 +16,9 @@ SRCS = ios_main.m AppDelegate.m RootViewController.m \
         TDLImageViewController.m TDLPlayerViewController.m
 TEST_SRCS = tests/test_iphone_main.m
 
+# Resources
+RESOURCES = $(wildcard Default*.png)
+
 # Build Rules
 .PHONY: all phone sim clean test_sim ipa
 
@@ -31,11 +34,15 @@ phone: TheDL-Phone.app
 	rm -rf $(OUT_DIR)/TheDL-Phone.app
 	mv TheDL-Phone.app $(OUT_DIR)/
 
-TheDL-Phone.app: $(SRCS)
+TheDL-Phone.app: $(SRCS) $(RESOURCES)
 	@mkdir -p $@
 	$(CC) $(IOS_ARCHS) -isysroot $(IOS_SDK) -miphoneos-version-min=$(IOS_MIN) -Wl,-no_pie $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(IOS_FW) $(CONFIG_FLAGS) \
 		$(SRCS) $(LIB_OUT_DIR)/libXP_iOS.a $(LIB_OUT_DIR)/libBase_iOS.a $(CURL_LIBS_IOS) -o $@/TheDL $(LIB_INCLUDES)
 	cp Info_iOS.plist $@/Info.plist
+	@for res in $(RESOURCES); do \
+		echo "Copying $$res..."; \
+		cp $$res $@/; \
+	done
 
 # Packaging for Physical Device
 ipa: phone
@@ -58,11 +65,15 @@ else
 	mv TheDL-Sim.app $(OUT_DIR)/
 endif
 
-TheDL-Sim.app: $(SRCS)
+TheDL-Sim.app: $(SRCS) $(RESOURCES)
 	@mkdir -p $@
 	$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) -Wl,-no_pie $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(SIM_FW) $(CONFIG_FLAGS) \
 		$(SRCS) $(LIB_OUT_DIR)/libXP_Sim.a $(LIB_OUT_DIR)/libBase_Sim.a $(CURL_LIBS_SIM) -o $@/TheDL $(LIB_INCLUDES)
 	cp Info_iOS.plist $@/Info.plist
+	@for res in $(RESOURCES); do \
+		echo "Copying $$res..."; \
+		cp $$res $@/; \
+	done
 
 # Unit Tests for Simulator
 test_sim:
