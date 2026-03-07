@@ -12,7 +12,6 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
   [data appendBytes:contents length:realsize];
   return realsize;
 }
-#endif
 
 @implementation XPCURLRequest
 
@@ -21,7 +20,6 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
                           headers:(NSDictionary *)headers
                              body:(NSData *)body
                             error:(NSError **)outError {
-#if THEDL_CURL_ENABLED
   CURL *curl = curl_easy_init();
   if (!curl) {
     if (outError) {
@@ -94,16 +92,8 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
   curl_easy_cleanup(curl);
 
   return result;
-#else
-  // Implementation stubbed for this target
-  if (outError) {
-    *outError = [NSError errorWithDomain:@"XPCURLRequestErrorDomain"
-                                    code:-2
-                                userInfo:[NSDictionary dictionaryWithObject:@"CURL not enabled for this target"
-                                                                     forKey:NSLocalizedDescriptionKey]];
-  }
-  return nil;
-#endif
 }
 
 @end
+
+#endif

@@ -8,11 +8,11 @@ XP_DIR = ../CrossPlatform
 LIB_INCLUDES = -I. -I$(XP_DIR) $(CURL_INC)
 
 # Source
-SRCS = TDLObject.m TDLDownload.m TDLDownloadList.m \
+SRCS = TDLDownload.m TDLDownloadList.m \
 	TDLService.m TDLDownloadTask.m \
 	TDLURLConnectionService.m TDLCURLRequestService.m TDLServiceManager.m
 
-TEST_SRCS = tests/TDLObjectTests.m tests/TDLDownloadTests.m tests/TDLURLConnectionServiceTests.m
+TEST_SRCS = tests/TDLDownloadTests.m tests/TDLURLConnectionServiceTests.m
 
 # Build Rules
 .PHONY: all ios sim mac clean test_mac test_sim

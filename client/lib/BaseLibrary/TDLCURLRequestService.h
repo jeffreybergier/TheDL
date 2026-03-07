@@ -1,5 +1,7 @@
 #import "TDLService.h"
 
+#if THEDL_CURL_ENABLED
+
 /**
  * A service that uses XPCURLRequest (libcurl) to fetch data.
  */
@@ -12,3 +14,5 @@
 + (TDLCURLRequestService *)sharedService;
 
 @end
+
+#endif

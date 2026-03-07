@@ -1,5 +1,8 @@
 #import <Foundation/Foundation.h>
 
+
+#if THEDL_CURL_ENABLED
+
 /**
  * A lightweight cross-platform wrapper around libcurl.
  * Handles synchronous network requests with legacy compatibility.
@@ -23,3 +26,5 @@
                             error:(NSError **)outError;
 
 @end
+
+#endif

@@ -13,7 +13,6 @@ typedef NSTextAlignment XPTextAlignment;
 #import <AppKit/AppKit.h>
 #define XPViewController NSObject
 
-// On OS X 10.4 and 10.5, NSApplicationDelegate was not a formal protocol.
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
 #define XPApplicationDelegate NSApplicationDelegate
 #else

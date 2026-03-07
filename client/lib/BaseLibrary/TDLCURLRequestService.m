@@ -3,6 +3,8 @@
 #import "TDLDownloadList.h"
 #import "XPCURLRequest.h"
 
+#if THEDL_CURL_ENABLED
+
 @implementation TDLCURLRequestService
 
 + (TDLCURLRequestService *)sharedService {
@@ -116,3 +118,5 @@
 }
 
 @end
+
+#endif

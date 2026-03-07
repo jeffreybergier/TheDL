@@ -5,8 +5,8 @@ include ../../common.mk
 LIB_INCLUDES = -I. $(CURL_INC)
 
 # Source
-SRCS = XPObject.m CrossPlatform.m XPCURLRequest.m
-TEST_SRCS = tests/XPObjectTests.m
+SRCS = CrossPlatform.m XPCURLRequest.m
+TEST_SRCS =
 
 # Build Rules
 .PHONY: all ios sim mac clean test_mac test_sim
