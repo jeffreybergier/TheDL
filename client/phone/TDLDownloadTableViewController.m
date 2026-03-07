@@ -2,7 +2,7 @@
 #import "TDLDownloadList.h"
 #import "TDLDownload.h"
 #import "TDLImageViewController.h"
-#import "TDLPlayerViewController.h"
+#import <MediaPlayer/MediaPlayer.h>
 #import "TDLDownloadInfoViewController.h"
 #import "TDLTextViewController.h"
 #import "TDLServiceListViewController.h"
@@ -93,9 +93,10 @@
     [imageVC release];
     [nav release];
   } else if ([contentType hasPrefix:@"video/"]) {
-    TDLPlayerViewController *playerVC = [[TDLPlayerViewController alloc] initWithContentURL:fileURL];
-    [self presentModalViewController:playerVC animated:YES];
-    [playerVC play];
+    // Standard system video player - no subclass needed!
+    MPMoviePlayerViewController *playerVC = [[MPMoviePlayerViewController alloc] initWithContentURL:fileURL];
+    [[playerVC moviePlayer] setScalingMode:MPMovieScalingModeAspectFit];
+    [self presentMoviePlayerViewControllerAnimated:playerVC];
     [playerVC release];
   } else if ([contentType hasPrefix:@"text/"] || [contentType containsString:@"xml"] || [contentType containsString:@"json"]) {
     TDLTextViewController *textVC = [[TDLTextViewController alloc] initWithDownloadURL:fileURL];
