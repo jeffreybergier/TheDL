@@ -19,4 +19,19 @@
  */
 - (id)initWithDownloadURL:(NSURL *)url;
 
+/**
+ * Dismisses the modal view controller.
+ */
+- (void)dismiss;
+
+/**
+ * Handles a double-tap gesture to toggle zoom.
+ */
+- (void)handleDoubleTap:(UITapGestureRecognizer *)gesture;
+
+/**
+ * Helper to calculate the zoom rectangle for a given scale and center point.
+ */
+- (CGRect)zoomRectForScale:(float)scale withCenter:(CGPoint)center;
+
 @end

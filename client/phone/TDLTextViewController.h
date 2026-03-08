@@ -14,4 +14,9 @@
  */
 - (id)initWithDownloadURL:(NSURL *)url;
 
+/**
+ * Dismisses the modal view controller.
+ */
+- (void)dismiss;
+
 @end

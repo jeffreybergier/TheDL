@@ -4,7 +4,6 @@
 /**
  * The primary application delegate for TheDL on macOS.
  */
-// TODO: replace with NSApplicationDelegate protocol for 10.6+
 @interface AppDelegate : NSObject <XPApplicationDelegate> {
  @private
   NSWindow *_window;

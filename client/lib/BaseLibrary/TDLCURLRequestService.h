@@ -15,4 +15,18 @@
 
 @end
 
+/**
+ * Private methods for TDLCURLRequestService.
+ */
+@interface TDLCURLRequestService (Private)
+
+/**
+ * Performs the actual CURL fetch on a background thread.
+ *
+ * @param info A dictionary containing the metadata and file URL.
+ */
+- (void)performFetchWithInfo:(NSDictionary *)info;
+
+@end
+
 #endif

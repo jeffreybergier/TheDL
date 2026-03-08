@@ -13,4 +13,14 @@
   NSArray *_sampleKeys;
 }
 
+/**
+ * Dismisses the modal view controller.
+ */
+- (void)dismiss;
+
+/**
+ * Initiates the download using the current URL and selected service.
+ */
+- (void)startDownload;
+
 @end
