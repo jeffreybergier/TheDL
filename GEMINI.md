@@ -2,8 +2,8 @@
 
 - This is a project for a retro iphone, mac and Swift Server app
 - The app is called TheDL
-- This app targets iPhoneOS 3.1 and higher as well as Mac OS X 10.4 Tiger and higher
-- This means we need to compile for armv7, armv7s, arm64, and x86_64, i386, and ppc
+- This app targets iOS 4.3 and higher as well as OS X 10.6 Snow Leopard and higher
+- This means we need to compile for armv7, armv7s, arm64, and x86_64, i386
 - This should be possible with Xcode Xcode 6.2 which is installed in OS X Mavericks running in a virtual machine
 - You are running in Docker, but this Docker container has an SSH private key installed in /root/.ssh and the Mavericks VM has the public key trusted so no passwords are needed.
 - We are going to use a makefile to build these projects as I want you to be able to work headlessly without needing Xcode

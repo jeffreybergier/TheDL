@@ -1,20 +1,20 @@
 #import <Foundation/Foundation.h>
 #include <TargetConditionals.h>
 
+// MARK: Import Appropriate Kit
 #if TARGET_OS_IPHONE
 #import <UIKit/UIKit.h>
-#define XPApplicationDelegate UIApplicationDelegate
-#define XPViewController UIViewController
-
-typedef NSTextAlignment XPTextAlignment;
-#define XPTextAlignmentLeft NSTextAlignmentLeft
-#define XPTextAlignmentCenter NSTextAlignmentCenter
-#define XPTextAlignmentRight NSTextAlignmentRight
-
 #else
 #import <AppKit/AppKit.h>
-#define XPViewController NSObject
+#endif
 
+// MARK: Log Library Versions
+/**
+ * Logs the versions of all libraries and frameworks used.
+ */
+void XPLogLibraryVersions(void);
+
+// MARK: Fix OS X "Modern" Protocols
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
 #define XPApplicationDelegate NSApplicationDelegate
 #else
@@ -22,34 +22,28 @@ typedef NSTextAlignment XPTextAlignment;
 @end
 #endif
 
-// TODO: Fix this on iOS 5 and lower
-typedef NSTextAlignment XPTextAlignment;
-#define XPTextAlignmentLeft NSTextAlignmentLeft
-#define XPTextAlignmentCenter NSTextAlignmentCenter
-#define XPTextAlignmentRight NSTextAlignmentRight
+// MARK: Fix NSTextAlignment symbol issues
 
+#if defined(TARGET_OS_IPHONE) && __IPHONE_OS_VERSION_MIN_REQUIRED < 60000
+#define XPTextAlignment          UITextAlignment
+#define XPTextAlignmentLeft      (NSInteger)UITextAlignmentLeft
+#define XPTextAlignmentRight     (NSInteger)UITextAlignmentRight
+#define XPTextAlignmentCenter    (NSInteger)UITextAlignmentCenter
+#define XPTextAlignmentJustified (NSInteger)UITextAlignmentLeft
+#define XPTextAlignmentNatural   (NSInteger)UITextAlignmentLeft
+#elif __MAC_OS_X_VERSION_MIN_REQUIRED >= 1080
+#define XPTextAlignment          NSTextAlignment
+#define XPTextAlignmentLeft      NSTextAlignmentLeft
+#define XPTextAlignmentRight     NSTextAlignmentRight
+#define XPTextAlignmentCenter    NSTextAlignmentCenter
+#define XPTextAlignmentJustified NSTextAlignmentJustified
+#define XPTextAlignmentNatural   NSTextAlignmentNatural
+#else
+#define XPTextAlignment          NSInteger
+#define XPTextAlignmentLeft      NSLeftTextAlignment
+#define XPTextAlignmentRight     NSRightTextAlignment
+#define XPTextAlignmentCenter    NSCenterTextAlignment
+#define XPTextAlignmentJustified NSJustifiedTextAlignment
+#define XPTextAlignmentNatural   NSNaturalTextAlignment
 #endif
 
-/**
- * Logs the versions of all libraries and frameworks used.
- */
-void XPLogLibraryVersions(void);
-
-@interface NSFileManager (CrossPlatform)
-
-/**
- * Cross-platform wrapper for contentsOfDirectoryAtPath:error:
- * Falls back to directoryContentsAtPath: on legacy systems.
- */
-- (NSArray *)XP_contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error;
-
-/**
- * Cross-platform wrapper for createDirectoryAtPath:withIntermediateDirectories:attributes:error:
- * Falls back to createDirectoryAtPath:attributes: on legacy systems.
- */
-- (BOOL)XP_createDirectoryAtPath:(NSString *)path 
-     withIntermediateDirectories:(BOOL)createIntermediates 
-                      attributes:(NSDictionary *)attributes 
-                           error:(NSError **)error;
-
-@end

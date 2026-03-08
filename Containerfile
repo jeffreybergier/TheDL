@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     libz-dev \
     cmake \
     wget \
+    rsync \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Set up OSXCross
@@ -72,6 +73,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     zip \
     ssh \
+    rsync \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Gemini CLI
