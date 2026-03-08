@@ -62,10 +62,10 @@ Run these commands from the `client/` directory:
 To install the IPA on a device (e.g., `ios-six`):
 ```bash
 # 1. Sync the IPA
-scp -F .ssh/config client/build/debug/TheDL.ipa ios-six:/tmp/
+scp client/build/debug/TheDL.ipa ios-six:/tmp/
 
 # 2. Install via ipainstaller
-ssh -F .ssh/config ios-six "ipainstaller /tmp/TheDL.ipa"
+ssh ios-six "ipainstaller /tmp/TheDL.ipa"
 ```
 
 ### iOS Simulator

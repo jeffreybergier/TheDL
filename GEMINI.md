@@ -55,7 +55,7 @@ All artifacts are centralized in the `client/build/` directory:
 ### Deployment to Mavericks VM (Simulator/Mac)
 For efficient syncing, use `tar` to stream files while excluding build noise:
 ```bash
-tar --exclude='build' --exclude='*.o' --exclude='*.a' -cf - client | ssh -F .ssh/config mavericks-vm "tar -xf - -C /Users/me/Desktop/TheDL/"
+tar --exclude='build' --exclude='*.o' --exclude='*.a' -cf - client | ssh mavericks-vm "tar -xf - -C /Users/me/Desktop/TheDL/"
 ```
 Alternatively, if `rsync` is installed on the VM:
 ```bash
@@ -67,27 +67,26 @@ To install the IPA on a jailbroken device (e.g., `ios-six` at `192.168.0.192`):
 
 1.  **Copy the IPA to the device:**
     ```bash
-    scp -F .ssh/config client/build/debug/TheDL.ipa ios-six:/tmp/TheDL.ipa
+    scp client/build/debug/TheDL.ipa ios-six:/tmp/TheDL.ipa
     ```
 2.  **Install using IPAInstaller:**
     ```bash
-    ssh -F .ssh/config ios-six "ipainstaller /tmp/TheDL.ipa"
+    ssh ios-six "ipainstaller /tmp/TheDL.ipa"
     ```
 3.  **Clean up temporary file:**
     ```bash
-    ssh -F .ssh/config ios-six "rm /tmp/TheDL.ipa"
+    ssh ios-six "rm /tmp/TheDL.ipa"
     ```
 
-### Monitoring Logs
-To see the system output and `NSLog` messages while the app is running:
-```bash
-# iPhone (Physical)
-ssh -F .ssh/config ios-six "tail -f /var/log/syslog"
+    ### Monitoring Logs
+    To see the system output and `NSLog` messages while the app is running:
+    ```bash
+    # iPhone (Physical)
+    ssh ios-six "tail -f /var/log/syslog"
 
-# Simulator (Mavericks VM)
-ssh -F .ssh/config mavericks-vm "tail -f ~/Library/Logs/CoreSimulator/<DEVICE_UDID>/system.log"
-```
-
+    # Simulator (Mavericks VM)
+    ssh mavericks-vm "tail -f ~/Library/Logs/CoreSimulator/<DEVICE_UDID>/system.log"
+    ```
 - **Technical Constraints for Legacy Compatibility:**
     - **No Automatic Reference Counting (ARC):** Always use manual retain/release/autorelease.
     - **No Property Syntax:** Do not use `@property` or `@synthesize`. Use manual instance variables and accessor methods instead.

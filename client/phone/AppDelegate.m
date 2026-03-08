@@ -15,14 +15,14 @@
   }
 }
 
-- (UITabBarController *)tabBarController {
-  return _tabBarController;
+- (UINavigationController *)navigationController {
+  return _navigationController;
 }
 
-- (void)setTabBarController:(UITabBarController *)controller {
-  if (_tabBarController != controller) {
-    [_tabBarController release];
-    _tabBarController = [controller retain];
+- (void)setNavigationController:(UINavigationController *)controller {
+  if (_navigationController != controller) {
+    [_navigationController release];
+    _navigationController = [controller retain];
   }
 }
 
@@ -37,19 +37,15 @@
   [_window setBackgroundColor:[UIColor whiteColor]];
   
   TDLDownloadTableViewController *downloadVC = [[TDLDownloadTableViewController alloc] init];
-  UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:downloadVC];
+  _navigationController = [[UINavigationController alloc] initWithRootViewController:downloadVC];
   [downloadVC release];
   
-  _tabBarController = [[UITabBarController alloc] init];
-  [_tabBarController setViewControllers:[NSArray arrayWithObject:nav]];
-  [nav release];
-  
-  NSLog(@"[AppDelegate application:didFinishLaunchingWithOptions:] TabBarController created");
+  NSLog(@"[AppDelegate application:didFinishLaunchingWithOptions:] NavigationController created");
   
   if ([_window respondsToSelector:@selector(setRootViewController:)]) {
-    [_window setRootViewController:_tabBarController];
+    [_window setRootViewController:_navigationController];
   } else {
-    [_window addSubview:[_tabBarController view]];
+    [_window addSubview:[_navigationController view]];
   }
   
   [_window makeKeyAndVisible];
@@ -59,7 +55,7 @@
 }
 
 - (void)dealloc {
-  [_tabBarController release];
+  [_navigationController release];
   [_window release];
   [super dealloc];
 }

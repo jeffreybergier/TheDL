@@ -6,7 +6,7 @@
 @interface AppDelegate : NSObject <UIApplicationDelegate> {
  @private
   UIWindow *_window;
-  UITabBarController *_tabBarController;
+  UINavigationController *_navigationController;
 }
 
 /** Returns the main application window. */
@@ -19,14 +19,14 @@
  */
 - (void)setWindow:(UIWindow *)window;
 
-/** Returns the main tab bar controller. */
-- (UITabBarController *)tabBarController;
+/** Returns the main navigation controller. */
+- (UINavigationController *)navigationController;
 
 /**
- * Sets the main tab bar controller.
+ * Sets the main navigation controller.
  *
- * @param controller The tab bar controller to set.
+ * @param controller The navigation controller to set.
  */
-- (void)setTabBarController:(UITabBarController *)controller;
+- (void)setNavigationController:(UINavigationController *)controller;
 
 @end
