@@ -11,8 +11,6 @@ LIB_INCLUDES = -I. -I$(XP_DIR) -I$(BASE_DIR) $(CURL_INC)
 # Source
 SRCS = ios_main.m AppDelegate.m \
         TDLDownloadTableViewController.m TDLServiceListViewController.m \
-        TDLURLConnectionServiceTableViewController.m \
-        TDLCURLRequestServiceTableViewController.m \
         TDLImageViewController.m \
         TDLDownloadInfoViewController.m TDLTextViewController.m
 TEST_SRCS = tests/test_iphone_main.m
