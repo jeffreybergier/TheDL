@@ -16,9 +16,26 @@
 
 The project uses a sophisticated **Dual-Environment Build System** managed entirely by Makefiles. It avoids Xcode project files to enable headless, high-speed automated builds.
 
-### 1. Dual-Environment Setup
+### 1. Docker Development Environment
+The project includes a pre-configured Docker environment with all cross-compilation tools and SDKs.
+
+- **Launch Gemini Agent**:
+  ```bash
+  docker compose run --rm xcompile-gemini
+  ```
+- **Enter Headless Shell**:
+  ```bash
+  docker compose run --rm xcompile-shell
+  ```
+- **Full Release Build**:
+  ```bash
+  docker compose run --rm xcompile-shell make -C client release
+  ```
+
+### 2. Dual-Environment Setup
 - **Docker (osxcross)**: Primary environment for cross-compiling iOS Device (`armv7/s/64`) and Mac (`i386/x86_64`) binaries using the iPhoneOS 8.2 and MacOSX 10.10 SDKs.
 - **Mavericks VM**: Native OS X 10.9 environment used specifically for building the **iOS Simulator** (`i386`) target, ensuring compatibility with the legacy simulator linker.
+- **Enhanced Tooling**: The Docker environment includes `rsync`, `ripgrep`, `jq`, `fd-find`, and `tree` for advanced debugging and codebase exploration.
 
 ### 2. Makefile Hierarchy
 - **`client/common.mk`**: The brain of the build system. Detects the environment (`HAS_OSXCROSS`), manages paths, defines compiler flags (`-fno-objc-arc`, `-mmacosx-version-min=10.6`), and handles conditional compilation via `THEDL_CURL_ENABLED`.

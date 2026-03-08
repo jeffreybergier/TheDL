@@ -1,31 +1,13 @@
-## Handy Shortcuts
-# This file is purely optional and just allows easy shortcuts
-# for running all the function exposed in Docker.
-# To see original commands or to use without compose,
-# see Containerfile
-
-# Launch standard Gemini (Fallback):
-# docker compose run --rm plain-gemini gemini --yolo
-
-# Launch Cross-Compile Gemini (Current):
-# docker compose run --rm xcompile-gemini gemini --yolo
+## Gemini CLI with Cross-Compilation Tools
+# This compose file sets up the development environment for TheDL.
+#
+# Usage:
+# Gemini Agent:     docker compose run --rm xcompile-gemini
+# Xcompile Only:    docker compose run --rm xcompile-shell
+# Full Release:     docker compose run --rm xcompile-shell make -C client release
 
 services:
-  # 1. Run Gemini (Original Fallback)
-  plain-gemini:
-    build:
-      context: .
-      dockerfile: Containerfile
-      target: plain-gemini
-    image: plain-gemini
-    volumes:
-      - .:/app
-      - ~/.gemini:/root/.gemini
-    command: gemini --yolo
-    stdin_open: true
-    tty: true
-
-  # 2. Run Gemini with Cross-Compilation Tools
+  # 1. Run Gemini Agent with full toolchain
   xcompile-gemini:
     build:
       context: .
@@ -35,6 +17,21 @@ services:
     volumes:
       - .:/app
       - ~/.gemini:/root/.gemini
+      - ./.ssh:/root/.ssh
     command: gemini --yolo
+    stdin_open: true
+    tty: true
+
+  # 2. Pure Cross-Compilation Shell (No Gemini)
+  xcompile-shell:
+    build:
+      context: .
+      dockerfile: Containerfile
+      target: xcompile-base
+    image: xcompile-base
+    volumes:
+      - .:/app
+      - ./.ssh:/root/.ssh
+    command: /bin/bash
     stdin_open: true
     tty: true

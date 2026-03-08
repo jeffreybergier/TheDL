@@ -13,8 +13,24 @@
 
 ## Build & Deployment Instructions
 
+### Docker Development Environment
+The project includes a pre-configured Docker environment with all cross-compilation tools and SDKs.
+
+- **Launch Gemini Agent**:
+  ```bash
+  docker compose run --rm xcompile-gemini
+  ```
+- **Enter Headless Shell**:
+  ```bash
+  docker compose run --rm xcompile-shell
+  ```
+- **Full Release Build**:
+  ```bash
+  docker compose run --rm xcompile-shell make -C client release
+  ```
+
 ### Building (Dual Environment)
-The project uses a unified Makefile system that automatically detects if it's running in the **Docker Cross-Compile Environment** or the **Mavericks VM**.
+The unified Makefile system automatically detects the environment.
 
 1.  **Navigate to the client directory:**
     ```bash
@@ -36,6 +52,16 @@ All artifacts are centralized in the `client/build/` directory:
 - `build/<config>/TheDL-Mac.app`: Mac App Bundle.
 - `build/<config>/lib/`: Custom static libraries (`libBase_*.a`, `libXP_*.a`).
 
+### Deployment to Mavericks VM (Simulator/Mac)
+For efficient syncing, use `tar` to stream files while excluding build noise:
+```bash
+tar --exclude='build' --exclude='*.o' --exclude='*.a' -cf - client | ssh -F .ssh/config mavericks-vm "tar -xf - -C /Users/me/Desktop/TheDL/"
+```
+Alternatively, if `rsync` is installed on the VM:
+```bash
+rsync -avz --exclude='build' --exclude='*.o' --exclude='*.a' client/ mavericks-vm:/Users/me/Desktop/TheDL/client/
+```
+
 ### Deployment to Jailbroken iPhone
 To install the IPA on a jailbroken device (e.g., `ios-six` at `192.168.0.192`):
 
@@ -55,7 +81,11 @@ To install the IPA on a jailbroken device (e.g., `ios-six` at `192.168.0.192`):
 ### Monitoring Logs
 To see the system output and `NSLog` messages while the app is running:
 ```bash
+# iPhone (Physical)
 ssh -F .ssh/config ios-six "tail -f /var/log/syslog"
+
+# Simulator (Mavericks VM)
+ssh -F .ssh/config mavericks-vm "tail -f ~/Library/Logs/CoreSimulator/<DEVICE_UDID>/system.log"
 ```
 
 - **Technical Constraints for Legacy Compatibility:**
