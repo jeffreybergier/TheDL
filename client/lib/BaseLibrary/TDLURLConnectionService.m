@@ -14,6 +14,36 @@
   return sharedInstance;
 }
 
+/**
+ * Returns a shared background thread for network operations.
+ */
++ (void)networkThreadEntryPoint:(id)__unused object {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  [[NSThread currentThread] setName:@"TDLNetworkThread"];
+  
+  NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
+  [runLoop addPort:[NSMachPort port] forMode:NSDefaultRunLoopMode];
+  [runLoop run];
+  
+  [pool drain];
+}
+
++ (NSThread *)networkThread {
+  static NSThread *_networkThread = nil;
+  
+  // Note: dispatch_once is technically 10.6+ / iOS 4.0+, 
+  // but for very old systems we can use a synchronized block.
+  @synchronized(self) {
+    if (_networkThread == nil) {
+      _networkThread = [[NSThread alloc] initWithTarget:self 
+                                                selector:@selector(networkThreadEntryPoint:) 
+                                                  object:nil];
+      [_networkThread start];
+    }
+  }
+  return _networkThread;
+}
+
 - (id)init {
   self = [super init];
   if (self) {
@@ -35,6 +65,14 @@
 
 - (NSString *)serviceIdentifier {
   return @"com.kumasan.thedl.service.urlconnection";
+}
+
+/**
+ * Helper to start connection on the network thread.
+ */
+- (void)startConnection:(NSURLConnection *)connection {
+  [connection scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+  [connection start];
 }
 
 - (void)fetchURL:(NSURL *)url {
@@ -76,11 +114,20 @@
   
   NSURLRequest *request = [NSURLRequest requestWithURL:url];
   NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request 
-                                                                delegate:self];
+                                                                delegate:self 
+                                                        startImmediately:NO];
   if (connection) {
     [task setConnection:connection];
-    [_activeTasks setObject:task forKey:[NSValue valueWithPointer:connection]];
-    [_taskList addObject:fileURL];
+    
+    @synchronized(_activeTasks) {
+      [_activeTasks setObject:task forKey:[NSValue valueWithPointer:connection]];
+      [_taskList addObject:fileURL];
+    }
+    
+    [self performSelector:@selector(startConnection:) 
+                 onThread:[[self class] networkThread] 
+               withObject:connection 
+            waitUntilDone:NO];
   }
   
   [task release];
@@ -94,7 +141,10 @@
 #pragma mark - NSURLConnection Delegate
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  TDLDownloadTask *task = nil;
+  @synchronized(_activeTasks) {
+    task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  }
   if (task) {
     TDLDownload *metadata = [task metadata];
     [metadata setContentType:[response MIMEType]];
@@ -104,17 +154,29 @@
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  TDLDownloadTask *task = nil;
+  @synchronized(_activeTasks) {
+    task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  }
   if (task) {
     NSFileHandle *handle = [NSFileHandle fileHandleForWritingToURL:[task targetFileURL] error:nil];
     [handle seekToEndOfFile];
     [handle writeData:data];
     [handle closeFile];
+
+#ifdef DEBUG
+    // Artificially slow down to test UI features (approx 50ms per chunk)
+    // This will slow the transfer while keeping it predictable
+    usleep(50000); 
+#endif
   }
 }
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  TDLDownloadTask *task = nil;
+  @synchronized(_activeTasks) {
+    task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  }
   if (task) {
     TDLDownload *metadata = [task metadata];
     [metadata setState:TDLDownloadStateFailed];
@@ -123,12 +185,17 @@
     // Save metadata even on failure if we have a file
     [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
     
-    [_activeTasks removeObjectForKey:[NSValue valueWithPointer:connection]];
+    @synchronized(_activeTasks) {
+      [_activeTasks removeObjectForKey:[NSValue valueWithPointer:connection]];
+    }
   }
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  TDLDownloadTask *task = nil;
+  @synchronized(_activeTasks) {
+    task = [_activeTasks objectForKey:[NSValue valueWithPointer:connection]];
+  }
   if (task) {
     TDLDownload *metadata = [task metadata];
     [metadata setState:TDLDownloadStateFinished];
@@ -136,7 +203,9 @@
     // SAVE TO RESOURCE FORK
     [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
     
-    [_activeTasks removeObjectForKey:[NSValue valueWithPointer:connection]];
+    @synchronized(_activeTasks) {
+      [_activeTasks removeObjectForKey:[NSValue valueWithPointer:connection]];
+    }
   }
 }
 

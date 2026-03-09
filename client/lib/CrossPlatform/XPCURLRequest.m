@@ -4,17 +4,63 @@
 #include <curl/curl.h>
 
 /**
- * Callback for libcurl to write received data into an NSMutableData object.
+ * Internal delegate class for static convenience methods.
  */
-static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp) {
-  size_t realsize = size * nmemb;
-  NSMutableData *data = (NSMutableData *)userp;
-  [data appendBytes:contents length:realsize];
-  return realsize;
+@interface XPCStaticRequestDelegate : NSObject <XPCURLRequestDelegate> {
+ @public
+  NSMutableData *_responseData;
+  NSMutableDictionary *_responseHeaders;
+  NSError *_error;
+  BOOL _finished;
+  NSFileHandle *_fileHandle;
+}
+@end
+
+@implementation XPCStaticRequestDelegate
+
+- (id)init {
+  self = [super init];
+  if (self) {
+    _responseData = [[NSMutableData alloc] init];
+    _responseHeaders = [[NSMutableDictionary alloc] init];
+    _finished = NO;
+  }
+  return self;
 }
 
+- (void)dealloc {
+  [_responseData release];
+  [_responseHeaders release];
+  [_error release];
+  [_fileHandle release];
+  [super dealloc];
+}
+
+- (void)xpcRequest:(XPCURLRequest *)request didReceiveResponse:(NSDictionary *)responseHeaders {
+  [_responseHeaders addEntriesFromDictionary:responseHeaders];
+}
+
+- (void)xpcRequest:(XPCURLRequest *)request didReceiveData:(NSData *)data {
+  if (_fileHandle) {
+    [_fileHandle writeData:data];
+  } else {
+    [_responseData appendData:data];
+  }
+}
+
+- (void)xpcRequest:(XPCURLRequest *)request didFailWithError:(NSError *)error {
+  _error = [error retain];
+  _finished = YES;
+}
+
+- (void)xpcRequestDidFinishLoading:(XPCURLRequest *)request {
+  _finished = YES;
+}
+
+@end
+
 /**
- * Callback for libcurl to handle response headers.
+ * Callback for libcurl to handle response headers and populate a dictionary.
  */
 static size_t HeaderCallback(void *contents, size_t size, size_t nmemb, void *userp) {
   size_t realsize = size * nmemb;
@@ -34,6 +80,22 @@ static size_t HeaderCallback(void *contents, size_t size, size_t nmemb, void *us
   return realsize;
 }
 
+/**
+ * Callback for libcurl to write received data and pass it to the delegate.
+ */
+static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, void *userp) {
+  size_t realsize = size * nmemb;
+  XPCURLRequest *request = (XPCURLRequest *)userp;
+  
+  if ([[request delegate] respondsToSelector:@selector(xpcRequest:didReceiveData:)]) {
+    NSData *data = [[NSData alloc] initWithBytesNoCopy:contents length:realsize freeWhenDone:NO];
+    [[request delegate] xpcRequest:request didReceiveData:data];
+    [data release];
+  }
+  
+  return realsize;
+}
+
 @implementation XPCURLRequest
 
 + (NSData *)performRequestWithURL:(NSURL *)url
@@ -42,95 +104,180 @@ static size_t HeaderCallback(void *contents, size_t size, size_t nmemb, void *us
                              body:(NSData *)body
                   responseHeaders:(NSDictionary **)outResponseHeaders
                             error:(NSError **)outError {
+  XPCURLRequest *request = [[XPCURLRequest alloc] initWithURL:url
+                                                       method:method
+                                                      headers:headers
+                                                         body:body];
+  XPCStaticRequestDelegate *delegate = [[XPCStaticRequestDelegate alloc] init];
+  [request setDelegate:delegate];
+  [request start];
+  
+  NSData *result = nil;
+  if (delegate->_error) {
+    if (outError) *outError = delegate->_error;
+  } else {
+    result = [NSData dataWithData:delegate->_responseData];
+    if (outResponseHeaders) {
+      *outResponseHeaders = [NSDictionary dictionaryWithDictionary:delegate->_responseHeaders];
+    }
+  }
+  
+  [delegate release];
+  [request release];
+  return result;
+}
+
++ (BOOL)downloadURL:(NSURL *)url
+             method:(NSString *)method
+            headers:(NSDictionary *)headers
+               body:(NSData *)body
+          toFileURL:(NSURL *)fileURL
+    responseHeaders:(NSDictionary **)outResponseHeaders
+              error:(NSError **)outError {
+  XPCURLRequest *request = [[XPCURLRequest alloc] initWithURL:url
+                                                       method:method
+                                                      headers:headers
+                                                         body:body];
+  XPCStaticRequestDelegate *delegate = [[XPCStaticRequestDelegate alloc] init];
+  
+  NSError *fileError = nil;
+  delegate->_fileHandle = [[NSFileHandle fileHandleForWritingToURL:fileURL error:&fileError] retain];
+  if (!delegate->_fileHandle) {
+    if (outError) *outError = fileError;
+    [delegate release];
+    [request release];
+    return NO;
+  }
+  [delegate->_fileHandle truncateFileAtOffset:0];
+
+  [request setDelegate:delegate];
+  [request start];
+  
+  BOOL success = NO;
+  if (delegate->_error) {
+    if (outError) *outError = delegate->_error;
+  } else if (delegate->_finished) {
+    success = YES;
+    if (outResponseHeaders) {
+      *outResponseHeaders = [NSDictionary dictionaryWithDictionary:delegate->_responseHeaders];
+    }
+  }
+  
+  [delegate release];
+  [request release];
+  return success;
+}
+
+- (id)initWithURL:(NSURL *)url
+           method:(NSString *)method
+          headers:(NSDictionary *)headers
+             body:(NSData *)body {
+  self = [super init];
+  if (self) {
+    _url = [url retain];
+    _method = [method copy];
+    _headers = [headers retain];
+    _body = [body retain];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  [_url release];
+  [_method release];
+  [_headers release];
+  [_body release];
+  [super dealloc];
+}
+
+- (void)setDelegate:(id<XPCURLRequestDelegate>)delegate {
+  _delegate = delegate;
+}
+
+- (id<XPCURLRequestDelegate>)delegate {
+  return _delegate;
+}
+
+- (void)start {
   CURL *curl = curl_easy_init();
   if (!curl) {
-    if (outError) {
-      *outError = [NSError errorWithDomain:@"XPCURLRequestErrorDomain"
-                                      code:-1
-                                  userInfo:nil];
+    if ([_delegate respondsToSelector:@selector(xpcRequest:didFailWithError:)]) {
+      NSError *error = [NSError errorWithDomain:@"XPCURLRequestErrorDomain" code:-1 userInfo:nil];
+      [_delegate xpcRequest:self didFailWithError:error];
     }
-    return nil;
+    return;
   }
 
-  NSMutableData *responseData = [[NSMutableData alloc] init];
-  NSMutableDictionary *responseHeadersDict = [[NSMutableDictionary alloc] init];
   struct curl_slist *headerList = NULL;
+  NSMutableDictionary *responseHeadersDict = [[NSMutableDictionary alloc] init];
 
-  // Set URL
-  curl_easy_setopt(curl, CURLOPT_URL, [[url absoluteString] UTF8String]);
+  curl_easy_setopt(curl, CURLOPT_URL, [[_url absoluteString] UTF8String]);
 
-  // Set HTTP Method
-  if ([method isEqualToString:@"POST"]) {
+  if ([_method isEqualToString:@"POST"]) {
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
-  } else if (![method isEqualToString:@"GET"]) {
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, [method UTF8String]);
+  } else if (![_method isEqualToString:@"GET"]) {
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, [_method UTF8String]);
   }
 
-  // Set Request Headers
-  if (headers) {
-    NSEnumerator *enumerator = [headers keyEnumerator];
+  if (_headers) {
+    NSEnumerator *enumerator = [_headers keyEnumerator];
     NSString *key;
     while ((key = [enumerator nextObject])) {
-      NSString *value = [headers objectForKey:key];
+      NSString *value = [_headers objectForKey:key];
       NSString *headerString = [NSString stringWithFormat:@"%@: %@", key, value];
       headerList = curl_slist_append(headerList, [headerString UTF8String]);
     }
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerList);
   }
 
-  // Set Body
-  if (body && [body length] > 0) {
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, [body bytes]);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)[body length]);
+  if (_body && [_body length] > 0) {
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, [_body bytes]);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)[_body length]);
   }
 
-  // Set Callbacks
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)responseData);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, DelegateWriteCallback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)self);
   
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HeaderCallback);
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, (void *)responseHeadersDict);
 
-  // Set Defaults
-  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirects
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "TheDL/1.0 (Retro)");
-  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L); // Avoid signals in multi-threaded apps
-  
-  // SSL Defaults
+  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
-  // Perform Request
+#ifdef DEBUG
+  // Throttle to ~10 KB/s in debug mode to test UI features
+  curl_easy_setopt(curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)10240);
+#endif
+
   CURLcode res = curl_easy_perform(curl);
   
-  NSData *result = nil;
   if (res != CURLE_OK) {
-    if (outError) {
+    if ([_delegate respondsToSelector:@selector(xpcRequest:didFailWithError:)]) {
       NSString *errorMsg = [NSString stringWithUTF8String:curl_easy_strerror(res)];
       NSDictionary *userInfo = [NSDictionary dictionaryWithObject:errorMsg
                                                            forKey:NSLocalizedDescriptionKey];
-      *outError = [NSError errorWithDomain:@"XPCURLRequestErrorDomain"
-                                      code:res
-                                  userInfo:userInfo];
+      NSError *error = [NSError errorWithDomain:@"XPCURLRequestErrorDomain"
+                                           code:res
+                                       userInfo:userInfo];
+      [_delegate xpcRequest:self didFailWithError:error];
     }
-    NSLog(@"[XPCURLRequest] Error: %s", curl_easy_strerror(res));
   } else {
-    result = [NSData dataWithData:responseData];
-    if (outResponseHeaders) {
-      *outResponseHeaders = [NSDictionary dictionaryWithDictionary:responseHeadersDict];
+    if ([_delegate respondsToSelector:@selector(xpcRequest:didReceiveResponse:)]) {
+      [_delegate xpcRequest:self didReceiveResponse:responseHeadersDict];
     }
-    NSLog(@"[XPCURLRequest] Success: %lu bytes, Content-Type: %@", (unsigned long)[result length], [responseHeadersDict objectForKey:@"Content-Type"]);
+    if ([_delegate respondsToSelector:@selector(xpcRequestDidFinishLoading:)]) {
+      [_delegate xpcRequestDidFinishLoading:self];
+    }
   }
 
-  // Cleanup
   if (headerList) {
     curl_slist_free_all(headerList);
   }
-  [responseData release];
   [responseHeadersDict release];
   curl_easy_cleanup(curl);
-
-  return result;
 }
 
 @end

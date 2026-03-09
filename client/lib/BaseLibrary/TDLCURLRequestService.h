@@ -1,13 +1,15 @@
 #import "TDLService.h"
+#import "XPCURLRequest.h"
 
 #if THEDL_CURL_ENABLED
 
 /**
  * A service that uses XPCURLRequest (libcurl) to fetch data.
  */
-@interface TDLCURLRequestService : TDLService {
+@interface TDLCURLRequestService : TDLService <XPCURLRequestDelegate> {
  @private
-  NSMutableArray *_taskList; // Ordered list for UI
+  NSMutableDictionary *_activeTasks; // XPCURLRequest -> TDLDownloadTask
+  NSMutableArray *_taskList;         // Ordered list for UI
 }
 
 /** Returns the shared instance of the service. */

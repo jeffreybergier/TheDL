@@ -1,6 +1,7 @@
 #import "TDLCURLRequestService.h"
 #import "TDLDownload.h"
 #import "TDLDownloadList.h"
+#import "TDLDownloadTask.h"
 #import "XPCURLRequest.h"
 
 #if THEDL_CURL_ENABLED
@@ -18,12 +19,14 @@
 - (id)init {
   self = [super init];
   if (self) {
+    _activeTasks = [[NSMutableDictionary alloc] init];
     _taskList = [[NSMutableArray alloc] init];
   }
   return self;
 }
 
 - (void)dealloc {
+  [_activeTasks release];
   [_taskList release];
   [super dealloc];
 }
@@ -37,7 +40,6 @@
 }
 
 - (void)fetchURL:(NSURL *)url {
-#if THEDL_CURL_ENABLED
   NSLog(@"[TDLCURLRequestService fetchURL:] %@", url);
   
   TDLDownload *metadata = [[TDLDownload alloc] init];
@@ -53,7 +55,7 @@
   NSString *downloadsDir = [TDLDownloadList downloadsDirectory];
   NSString *dataPath = [downloadsDir stringByAppendingPathComponent:lastComponent];
   
-  // Deduplicate using " (2)" format
+  // Deduplicate
   if ([[NSFileManager defaultManager] fileExistsAtPath:dataPath]) {
     NSString *base = [lastComponent stringByDeletingPathExtension];
     NSString *ext = [lastComponent pathExtension];
@@ -74,60 +76,48 @@
                                              attributes:nil 
                                                   error:NULL];
   
-  // Create empty file so we have a target
+  // Create empty file
   [[NSData data] writeToFile:dataPath atomically:YES];
-  
   NSURL *fileURL = [NSURL fileURLWithPath:dataPath];
-  [_taskList addObject:fileURL];
-
-  // Perform CURL request on a background thread
-  // We pass a dictionary with metadata and fileURL
-  NSDictionary *info = [NSDictionary dictionaryWithObjectsAndKeys:
-                        metadata, @"metadata",
-                        fileURL, @"fileURL", nil];
+  
+  TDLDownloadTask *task = [[TDLDownloadTask alloc] initWithTargetURL:fileURL metadata:metadata];
   [metadata release];
-
-  [NSThread detachNewThreadSelector:@selector(performFetchWithInfo:) 
-                           toTarget:self 
-                         withObject:info];
-#else
-  NSLog(@"[TDLCURLRequestService] CURL is disabled for this target. Cannot fetch: %@", url);
-#endif
-}
-
-#if THEDL_CURL_ENABLED
-- (void)performFetchWithInfo:(NSDictionary *)info {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
-  TDLDownload *metadata = [info objectForKey:@"metadata"];
-  NSURL *fileURL = [info objectForKey:@"fileURL"];
-  
-  NSError *error = nil;
-  NSURL *url = [NSURL URLWithString:[metadata requestURL]];
-  NSDictionary *responseHeaders = nil;
-  
-  NSData *responseData = [XPCURLRequest performRequestWithURL:url
+  XPCURLRequest *request = [[XPCURLRequest alloc] initWithURL:url
                                                        method:@"GET"
                                                       headers:nil
-                                                         body:nil
-                                              responseHeaders:&responseHeaders
-                                                        error:&error];
+                                                         body:nil];
+  [request setDelegate:self];
   
-  if (error) {
-    NSLog(@"[TDLCURLRequestService] Failed: %@", [error localizedDescription]);
-    [metadata setState:TDLDownloadStateFailed];
-    [metadata setErrorMessage:[error localizedDescription]];
-    [[TDLDownloadList sharedList] saveDownload:metadata forURL:fileURL];
-  } else {
-    NSLog(@"[TDLCURLRequestService] Finished: %@", [fileURL lastPathComponent]);
-    
-    // Save data
-    BOOL success = [responseData writeToURL:fileURL atomically:YES];
-    if (!success) {
-      NSLog(@"[TDLCURLRequestService] ERROR: Could not write data to path: %@", [fileURL path]);
-    }
-    
-    // Set metadata from headers
+  // Map request to task
+  [_activeTasks setObject:task forKey:[NSValue valueWithPointer:request]];
+  [_taskList addObject:fileURL];
+  
+  [task release];
+
+  // Perform CURL request on a background thread as it's blocking
+  [NSThread detachNewThreadSelector:@selector(startRequest:) 
+                           toTarget:self 
+                         withObject:request];
+  [request release];
+}
+
+- (void)startRequest:(XPCURLRequest *)request {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  [request start];
+  [pool drain];
+}
+
+- (NSArray *)activeTasks {
+  return [NSArray array];
+}
+
+#pragma mark - XPCURLRequestDelegate
+
+- (void)xpcRequest:(XPCURLRequest *)request didReceiveResponse:(NSDictionary *)responseHeaders {
+  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:request]];
+  if (task) {
+    TDLDownload *metadata = [task metadata];
     NSString *contentType = [responseHeaders objectForKey:@"Content-Type"];
     if (contentType) {
       NSRange semicolonRange = [contentType rangeOfString:@";"];
@@ -137,19 +127,50 @@
       [metadata setContentType:contentType];
     }
     
-    [metadata setContentSize:[responseData length]];
+    NSString *contentLength = [responseHeaders objectForKey:@"Content-Length"];
+    if (contentLength) {
+      [metadata setContentSize:[contentLength longLongValue]];
+    }
+  }
+}
+
+- (void)xpcRequest:(XPCURLRequest *)request didReceiveData:(NSData *)data {
+  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:request]];
+  if (task) {
+    NSFileHandle *handle = [NSFileHandle fileHandleForWritingToURL:[task targetFileURL] error:nil];
+    [handle seekToEndOfFile];
+    [handle writeData:data];
+    [handle closeFile];
+  }
+}
+
+- (void)xpcRequest:(XPCURLRequest *)request didFailWithError:(NSError *)error {
+  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:request]];
+  if (task) {
+    TDLDownload *metadata = [task metadata];
+    [metadata setState:TDLDownloadStateFailed];
+    [metadata setErrorMessage:[error localizedDescription]];
+    
+    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    [_activeTasks removeObjectForKey:[NSValue valueWithPointer:request]];
+  }
+}
+
+- (void)xpcRequestDidFinishLoading:(XPCURLRequest *)request {
+  TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:request]];
+  if (task) {
+    TDLDownload *metadata = [task metadata];
     [metadata setState:TDLDownloadStateFinished];
     
-    // SAVE TO RESOURCE FORK
-    [[TDLDownloadList sharedList] saveDownload:metadata forURL:fileURL];
+    // Fallback content size if not set via headers
+    if ([metadata contentSize] == 0) {
+      NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:[[task targetFileURL] path] error:nil];
+      [metadata setContentSize:[attrs fileSize]];
+    }
+    
+    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    [_activeTasks removeObjectForKey:[NSValue valueWithPointer:request]];
   }
-  
-  [pool drain];
-}
-#endif
-
-- (NSArray *)activeTasks {
-  return [NSArray array];
 }
 
 @end
