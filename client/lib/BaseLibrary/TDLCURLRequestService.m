@@ -80,6 +80,9 @@
   [[NSData data] writeToFile:dataPath atomically:YES];
   NSURL *fileURL = [NSURL fileURLWithPath:dataPath];
   
+  // Save initial metadata so UI knows we are downloading
+  [[TDLDownloadList sharedList] saveDownload:metadata forURL:fileURL];
+  
   TDLDownloadTask *task = [[TDLDownloadTask alloc] initWithTargetURL:fileURL metadata:metadata];
   [metadata release];
   
@@ -118,7 +121,7 @@
   TDLDownloadTask *task = [_activeTasks objectForKey:[NSValue valueWithPointer:request]];
   if (task) {
     TDLDownload *metadata = [task metadata];
-    NSString *contentType = [responseHeaders objectForKey:@"Content-Type"];
+    NSString *contentType = [responseHeaders objectForKey:@"content-type"];
     if (contentType) {
       NSRange semicolonRange = [contentType rangeOfString:@";"];
       if (semicolonRange.location != NSNotFound) {
@@ -127,10 +130,13 @@
       [metadata setContentType:contentType];
     }
     
-    NSString *contentLength = [responseHeaders objectForKey:@"Content-Length"];
+    NSString *contentLength = [responseHeaders objectForKey:@"content-length"];
     if (contentLength) {
       [metadata setContentSize:[contentLength longLongValue]];
     }
+    
+    // Save metadata immediately so UI can show percentage if content-length is known
+    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
   }
 }
 
@@ -141,6 +147,9 @@
     [handle seekToEndOfFile];
     [handle writeData:data];
     [handle closeFile];
+    
+    // Persist metadata to trigger notification
+    [[TDLDownloadList sharedList] saveDownload:[task metadata] forURL:[task targetFileURL]];
   }
 }
 

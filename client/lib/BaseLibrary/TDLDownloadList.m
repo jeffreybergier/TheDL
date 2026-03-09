@@ -3,6 +3,8 @@
 #import "CrossPlatform.h"
 #include <sys/xattr.h>
 
+NSString *const TDLDownloadListUpdatedNotification = @"TDLDownloadListUpdatedNotification";
+
 static NSString *const kTDLMetadataXattrName = @"com.kumasan.thedl.metadata";
 
 @implementation TDLDownloadList
@@ -116,6 +118,14 @@ static NSString *const kTDLMetadataXattrName = @"com.kumasan.thedl.metadata";
     int result = setxattr(path, name, [plistData bytes], [plistData length], 0, 0);
     if (result == 0) {
       NSLog(@"[TDLDownloadList] Saved metadata to xattr: %@", [url lastPathComponent]);
+      
+      // Post notification on main thread for UI
+      dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"[TDLDownloadList] Posting TDLDownloadListUpdatedNotification for %@", [url path]);
+        [[NSNotificationCenter defaultCenter] postNotificationName:TDLDownloadListUpdatedNotification 
+                                                            object:self 
+                                                          userInfo:[NSDictionary dictionaryWithObject:url forKey:@"URL"]];
+      });
     } else {
       NSLog(@"[TDLDownloadList] ERROR: Could not write xattr: %d", result);
     }

@@ -24,21 +24,21 @@ all: debug test_mac test_ios
 # --- Delegate Library Builds ---
 xp_libs:
 	@echo "Building CrossPlatform libraries..."
-	$(MAKE) -C $(XP_DIR) all
+	$(MAKE) BUILD_CONFIG=$(BUILD_CONFIG) -C $(XP_DIR) all
 
 base_libs: xp_libs
 	@echo "Building BaseLibrary libraries..."
-	$(MAKE) -C $(BASE_DIR) all
+	$(MAKE) BUILD_CONFIG=$(BUILD_CONFIG) -C $(BASE_DIR) all
 
 # --- Delegate Phone App Build ---
 phone_apps: base_libs
 	@echo "Building Phone applications..."
-	$(MAKE) -C $(PHONE_DIR) all
+	$(MAKE) BUILD_CONFIG=$(BUILD_CONFIG) -C $(PHONE_DIR) all
 
 # --- Delegate Mac App Build ---
 mac_apps: base_libs
 	@echo "Building Mac applications..."
-	$(MAKE) -C $(MAC_DIR) all
+	$(MAKE) BUILD_CONFIG=$(BUILD_CONFIG) -C $(MAC_DIR) all
 
 # --- Build Targets ---
 debug: clean_debug

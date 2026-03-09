@@ -70,9 +70,14 @@ static size_t HeaderCallback(void *contents, size_t size, size_t nmemb, void *us
                                                    length:realsize
                                                  encoding:NSUTF8StringEncoding] autorelease];
   
+  // A blank line (just \r\n) indicates the end of headers for this block
+  if ([headerLine isEqualToString:@"\r\n"] || [headerLine isEqualToString:@"\n"]) {
+    [headers setObject:@"YES" forKey:@"__XPC_HEADERS_COMPLETE__"];
+  }
+
   NSRange separatorRange = [headerLine rangeOfString:@":"];
   if (separatorRange.location != NSNotFound) {
-    NSString *key = [[headerLine substringToIndex:separatorRange.location] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSString *key = [[[headerLine substringToIndex:separatorRange.location] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lowercaseString];
     NSString *value = [[headerLine substringFromIndex:separatorRange.location + 1] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     [headers setObject:value forKey:key];
   }
@@ -87,6 +92,22 @@ static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, v
   size_t realsize = size * nmemb;
   XPCURLRequest *request = (XPCURLRequest *)userp;
   
+#ifdef DEBUG
+  NSLog(@"[XPCURLRequest] Received chunk: %lu bytes", (unsigned long)realsize);
+  // Manual throttle (50ms per chunk) to allow UI testing without being too slow
+  usleep(50000);
+#endif
+
+  // Check if we need to notify about headers before the first chunk
+  NSMutableDictionary *headers = request->_responseHeaders;
+  if ([headers objectForKey:@"__XPC_HEADERS_COMPLETE__"]) {
+    if ([[request delegate] respondsToSelector:@selector(xpcRequest:didReceiveResponse:)]) {
+      [[request delegate] xpcRequest:request didReceiveResponse:headers];
+    }
+    // Remove the flag so we don't notify again
+    [headers removeObjectForKey:@"__XPC_HEADERS_COMPLETE__"];
+  }
+
   if ([[request delegate] respondsToSelector:@selector(xpcRequest:didReceiveData:)]) {
     NSData *data = [[NSData alloc] initWithBytesNoCopy:contents length:realsize freeWhenDone:NO];
     [[request delegate] xpcRequest:request didReceiveData:data];
@@ -178,6 +199,7 @@ static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, v
     _method = [method copy];
     _headers = [headers retain];
     _body = [body retain];
+    _responseHeaders = [[NSMutableDictionary alloc] init];
   }
   return self;
 }
@@ -187,6 +209,7 @@ static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, v
   [_method release];
   [_headers release];
   [_body release];
+  [_responseHeaders release];
   [super dealloc];
 }
 
@@ -199,6 +222,12 @@ static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, v
 }
 
 - (void)start {
+#ifdef DEBUG
+  NSLog(@"[XPCURLRequest] DEBUG mode: Throttling enabled (50KB/s)");
+#else
+  NSLog(@"[XPCURLRequest] RELEASE mode: No throttling");
+#endif
+
   CURL *curl = curl_easy_init();
   if (!curl) {
     if ([_delegate respondsToSelector:@selector(xpcRequest:didFailWithError:)]) {
@@ -209,7 +238,6 @@ static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, v
   }
 
   struct curl_slist *headerList = NULL;
-  NSMutableDictionary *responseHeadersDict = [[NSMutableDictionary alloc] init];
 
   curl_easy_setopt(curl, CURLOPT_URL, [[_url absoluteString] UTF8String]);
 
@@ -239,7 +267,7 @@ static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, v
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)self);
   
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HeaderCallback);
-  curl_easy_setopt(curl, CURLOPT_HEADERDATA, (void *)responseHeadersDict);
+  curl_easy_setopt(curl, CURLOPT_HEADERDATA, (void *)_responseHeaders);
 
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "TheDL/1.0 (Retro)");
@@ -248,8 +276,8 @@ static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, v
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
 #ifdef DEBUG
-  // Throttle to ~10 KB/s in debug mode to test UI features
-  curl_easy_setopt(curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)10240);
+  // Throttle to ~50 KB/s in debug mode to test UI features
+  curl_easy_setopt(curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)51200);
 #endif
 
   CURLcode res = curl_easy_perform(curl);
@@ -265,9 +293,7 @@ static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, v
       [_delegate xpcRequest:self didFailWithError:error];
     }
   } else {
-    if ([_delegate respondsToSelector:@selector(xpcRequest:didReceiveResponse:)]) {
-      [_delegate xpcRequest:self didReceiveResponse:responseHeadersDict];
-    }
+    // Notify about finish
     if ([_delegate respondsToSelector:@selector(xpcRequestDidFinishLoading:)]) {
       [_delegate xpcRequestDidFinishLoading:self];
     }
@@ -276,7 +302,6 @@ static size_t DelegateWriteCallback(void *contents, size_t size, size_t nmemb, v
   if (headerList) {
     curl_slist_free_all(headerList);
   }
-  [responseHeadersDict release];
   curl_easy_cleanup(curl);
 }
 

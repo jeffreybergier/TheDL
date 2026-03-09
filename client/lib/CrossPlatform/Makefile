@@ -41,6 +41,7 @@ $(LIB_OUT_DIR)/libXP_iOS.a: $(SRCS)
 
 $(LIB_OUT_DIR)/libXP_Sim.a: $(SRCS)
 	@mkdir -p $(LIB_OUT_DIR)
+	@echo "Building libXP_Sim.a with CONFIG_FLAGS: $(CONFIG_FLAGS)"
 	@objs=""; for src in $(SRCS); do \
 		obj=`basename $$src .m`_Sim.o; \
 		$(CC) $(SIM_ARCHS) -isysroot $(SIM_SDK) $(SIM_FLAGS) $(ARC_FLAGS) $(CLANG_WARN_FLAGS) $(LIB_INCLUDES) $(CONFIG_FLAGS) -c $$src -o $$obj; \

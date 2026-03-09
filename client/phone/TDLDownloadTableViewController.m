@@ -15,14 +15,40 @@
   if (self) {
     [self setTitle:@"TheDL"];
     _downloads = [[NSArray alloc] init];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(handleDownloadUpdated:) 
+                                                 name:TDLDownloadListUpdatedNotification 
+                                               object:nil];
   }
   return self;
 }
 
 - (void)dealloc {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
   [_downloads release];
   [_selectedDownload release];
   [super dealloc];
+}
+
+- (void)handleDownloadUpdated:(NSNotification *)notification {
+  NSURL *url = [[notification userInfo] objectForKey:@"URL"];
+  if (!url) return;
+  
+  NSLog(@"[TDLDownloadTableViewController] handleDownloadUpdated: received for %@", [url path]);
+  
+  // Find index of this URL in our data source
+  NSUInteger index = [_downloads indexOfObject:url];
+  if (index != NSNotFound) {
+    NSLog(@"[TDLDownloadTableViewController] Found URL at index %lu, reloading row", (unsigned long)index);
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+    NSArray *indexPaths = [NSArray arrayWithObject:indexPath];
+    [[self tableView] reloadRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationNone];
+  } else {
+    NSLog(@"[TDLDownloadTableViewController] URL not found in _downloads list, refreshing full list");
+    // If not found, it might be a NEW download, so refresh the full list
+    [self refreshDownloads];
+  }
 }
 
 - (void)viewDidLoad {
@@ -144,7 +170,8 @@
   
   NSNumber *fileSizeNumber = nil;
   [fileURL getResourceValue:&fileSizeNumber forKey:NSURLFileSizeKey error:nil];
-  long kb = (long)([fileSizeNumber longLongValue] / 1024);
+  long long currentSize = [fileSizeNumber longLongValue];
+  long kb = (long)(currentSize / 1024);
   
   NSString *type = [metadata contentType] ? [metadata contentType] : @"unknown";
   
@@ -153,7 +180,15 @@
   if (!service) service = @"none";
 
   NSString *detail;
-  if ([metadata errorMessage]) {
+  if ([metadata state] == TDLDownloadStateDownloading) {
+    if ([metadata contentSize] > 0) {
+      int percent = (int)((currentSize * 100) / [metadata contentSize]);
+      if (percent > 100) percent = 100;
+      detail = [NSString stringWithFormat:@"⇣ %d%%", percent];
+    } else {
+      detail = [NSString stringWithFormat:@"⇣ %ld KB", kb];
+    }
+  } else if ([metadata errorMessage]) {
     detail = [NSString stringWithFormat:@"⚠️ %@", [metadata errorMessage]];
   } else {
     detail = [NSString stringWithFormat:@"%ld KB・%@・%@", kb, type, service];

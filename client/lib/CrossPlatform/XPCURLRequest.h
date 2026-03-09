@@ -21,6 +21,8 @@
  * Handles synchronous network requests with legacy compatibility.
  */
 @interface XPCURLRequest : NSObject {
+ @public
+  NSMutableDictionary *_responseHeaders;
  @private
   NSURL *_url;
   NSString *_method;

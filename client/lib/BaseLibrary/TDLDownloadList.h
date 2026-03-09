@@ -2,6 +2,9 @@
 
 @class TDLDownload;
 
+/** Notification posted when a download is updated. UserInfo contains the NSURL. */
+extern NSString *const TDLDownloadListUpdatedNotification;
+
 /**
  * A central manager for all downloads (in-progress and completed).
  * Metadata is stored in the file's resource fork.

@@ -49,6 +49,11 @@
   if (self) {
     _activeTasks = [[NSMutableDictionary alloc] init];
     _taskList = [[NSMutableArray alloc] init];
+#ifdef DEBUG
+    NSLog(@"[TDLURLConnectionService] DEBUG mode active. Download throttling enabled.");
+#else
+    NSLog(@"[TDLURLConnectionService] RELEASE mode active. No throttling.");
+#endif
   }
   return self;
 }
@@ -109,6 +114,9 @@
   [[NSData data] writeToFile:dataPath atomically:YES];
   NSURL *fileURL = [NSURL fileURLWithPath:dataPath];
   
+  // Save initial metadata so UI knows we are downloading
+  [[TDLDownloadList sharedList] saveDownload:metadata forURL:fileURL];
+  
   TDLDownloadTask *task = [[TDLDownloadTask alloc] initWithTargetURL:fileURL metadata:metadata];
   [metadata release];
   
@@ -150,6 +158,9 @@
     [metadata setContentType:[response MIMEType]];
     [metadata setContentSize:[response expectedContentLength]];
     [metadata setResponseURL:[[response URL] absoluteString]];
+    
+    // Save metadata immediately so UI can show percentage if content-length is known
+    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
   }
 }
 
@@ -164,10 +175,14 @@
     [handle writeData:data];
     [handle closeFile];
 
+    // Persist metadata to trigger notification
+    [[TDLDownloadList sharedList] saveDownload:[task metadata] forURL:[task targetFileURL]];
+
 #ifdef DEBUG
-    // Artificially slow down to test UI features (approx 50ms per chunk)
-    // This will slow the transfer while keeping it predictable
-    usleep(50000); 
+    // LOG CHUNK
+    NSLog(@"[TDLURLConnectionService] Received chunk: %lu bytes", (unsigned long)[data length]);
+    // Aggressive slow down (500ms per chunk)
+    usleep(500000); 
 #endif
   }
 }
