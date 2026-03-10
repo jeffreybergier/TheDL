@@ -9,39 +9,37 @@ static NSString *const kTDLMetadataXattrName = @"com.kumasan.thedl.metadata";
 
 @implementation TDLDownloadList
 
-+ (TDLDownloadList *)sharedList {
-  static TDLDownloadList *sharedInstance = nil;
-  if (!sharedInstance) {
-    sharedInstance = [[TDLDownloadList alloc] init];
-  }
-  return sharedInstance;
-}
-
-- (id)init {
+- (id)initWithDownloadsDirectoryURL:(NSURL *)url {
   self = [super init];
+  if (self) {
+    _downloadsDirectoryURL = [url retain];
+    
+    // Ensure directory exists
+    [[NSFileManager defaultManager] createDirectoryAtPath:[_downloadsDirectoryURL path] 
+                              withIntermediateDirectories:YES 
+                                               attributes:nil 
+                                                    error:NULL];
+  }
   return self;
 }
 
-+ (NSString *)downloadsDirectory {
-  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-  NSString *documentsDirectory = [paths objectAtIndex:0];
-  return [documentsDirectory stringByAppendingPathComponent:@"Downloads"];
+- (void)dealloc {
+  [_downloadsDirectoryURL release];
+  [super dealloc];
 }
 
-- (NSString *)downloadsDirectory {
-  return [TDLDownloadList downloadsDirectory];
+- (NSURL *)downloadsDirectoryURL {
+  return _downloadsDirectoryURL;
 }
 
 - (NSArray *)allDownloads {
-  NSString *downloadsPath = [TDLDownloadList downloadsDirectory];
-  NSURL *downloadsURL = [NSURL fileURLWithPath:downloadsPath];
   NSFileManager *fileManager = [NSFileManager defaultManager];
   
   // Pre-fetch modification date and file size for performance
   NSArray *keys = [NSArray arrayWithObjects:NSURLContentModificationDateKey, NSURLFileSizeKey, nil];
   
   NSError *error = nil;
-  NSArray *files = [fileManager contentsOfDirectoryAtURL:downloadsURL 
+  NSArray *files = [fileManager contentsOfDirectoryAtURL:_downloadsDirectoryURL 
                               includingPropertiesForKeys:keys 
                                                  options:NSDirectoryEnumerationSkipsHiddenFiles 
                                                    error:&error];

@@ -1,6 +1,19 @@
 #import "TDLService.h"
+#import "TDLDownloadList.h"
 
 @implementation TDLService
+
+- (id)initWithDownloadList:(TDLDownloadList *)downloadList {
+  self = [super init];
+  if (self) {
+    _downloadList = [downloadList retain];
+  }
+  return self;
+}
+
+- (TDLDownloadList *)downloadList {
+  return _downloadList;
+}
 
 - (NSString *)serviceName {
   return @"Base Service";
@@ -30,6 +43,7 @@
 }
 
 - (void)dealloc {
+  [_downloadList release];
   [super dealloc];
 }
 

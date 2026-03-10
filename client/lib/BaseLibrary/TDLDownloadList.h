@@ -9,16 +9,22 @@ extern NSString *const TDLDownloadListUpdatedNotification;
  * A central manager for all downloads (in-progress and completed).
  * Metadata is stored in the file's resource fork.
  */
-@interface TDLDownloadList : NSObject
-
-/** Returns the shared singleton instance. */
-+ (TDLDownloadList *)sharedList;
+@interface TDLDownloadList : NSObject {
+ @private
+  NSURL *_downloadsDirectoryURL;
+}
 
 /**
- * Returns the path to the directory where downloads are stored.
+ * Initializes a new download list manager.
+ *
+ * @param url The local directory URL where downloads are stored.
  */
-+ (NSString *)downloadsDirectory;
-- (NSString *)downloadsDirectory;
+- (id)initWithDownloadsDirectoryURL:(NSURL *)url;
+
+/**
+ * Returns the URL to the directory where downloads are stored.
+ */
+- (NSURL *)downloadsDirectoryURL;
 
 /**
  * Returns all download file URLs in the downloads directory sorted by modification date.

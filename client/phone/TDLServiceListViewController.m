@@ -5,11 +5,12 @@
 
 @implementation TDLServiceListViewController
 
-- (id)init {
+- (id)initWithServiceManager:(TDLServiceManager *)serviceManager {
   self = [super initWithStyle:UITableViewStyleGrouped];
   if (self) {
     [self setTitle:@"Download"];
     _selectedServiceIndex = 0;
+    _serviceManager = [serviceManager retain];
     
     // Setup sorted sample keys
     NSDictionary *samples = [TDLService sampleURLs];
@@ -21,6 +22,7 @@
 - (void)dealloc {
   [_urlTextView release];
   [_sampleKeys release];
+  [_serviceManager release];
   [super dealloc];
 }
 
@@ -81,7 +83,7 @@
     return;
   }
 
-  NSArray *services = [[TDLServiceManager sharedManager] availableServices];
+  NSArray *services = [_serviceManager availableServices];
   if (_selectedServiceIndex < [services count]) {
     TDLService *service = [services objectAtIndex:_selectedServiceIndex];
     [service fetchURL:url];
@@ -103,7 +105,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
   if (section == 0) return 2; // URL and Start Download
-  if (section == 1) return [[[TDLServiceManager sharedManager] availableServices] count]; // Services
+  if (section == 1) return [[_serviceManager availableServices] count]; // Services
   if (section == 2) return [_sampleKeys count]; // Examples
   return 0;
 }
@@ -163,7 +165,7 @@
                                      reuseIdentifier:ServiceCellID] autorelease];
     }
     
-    TDLService *service = [[[TDLServiceManager sharedManager] availableServices] objectAtIndex:[indexPath row]];
+    TDLService *service = [[_serviceManager availableServices] objectAtIndex:[indexPath row]];
     [[cell textLabel] setText:[service serviceName]];
     
     if ([indexPath row] == _selectedServiceIndex) {

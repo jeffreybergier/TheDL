@@ -1,5 +1,7 @@
 #import "AppDelegate.h"
 #import "CrossPlatform.h"
+#import "TDLDownloadList.h"
+#import "TDLServiceManager.h"
 
 @implementation AppDelegate
 
@@ -18,6 +20,15 @@
   NSLog(@"[AppDelegate applicationDidFinishLaunching:] Started TheDL on macOS.");
   XPLogLibraryVersions();
 
+  // Initialize Managers
+  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+  NSString *documentsDirectory = [paths objectAtIndex:0];
+  NSString *downloadsPath = [documentsDirectory stringByAppendingPathComponent:@"Downloads"];
+  NSURL *downloadsURL = [NSURL fileURLWithPath:downloadsPath];
+  
+  _downloadList = [[TDLDownloadList alloc] initWithDownloadsDirectoryURL:downloadsURL];
+  _serviceManager = [[TDLServiceManager alloc] initWithDownloadList:_downloadList];
+
   NSRect frame = NSMakeRect(0, 0, 480, 320);
   unsigned int styleMask = NSTitledWindowMask | NSClosableWindowMask |
                          NSMiniaturizableWindowMask | NSResizableWindowMask;
@@ -33,6 +44,8 @@
 
 - (void)dealloc {
   [_window release];
+  [_downloadList release];
+  [_serviceManager release];
   [super dealloc];
 }
 

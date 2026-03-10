@@ -2,6 +2,8 @@
 
 @class TDLDownload;
 
+@class TDLDownloadList;
+
 /**
  * A view controller that displays all metadata for a TDLDownload object.
  */
@@ -11,12 +13,15 @@
   NSURL *_fileURL;
   NSArray *_keys;
   NSDictionary *_data;
+  TDLDownloadList *_downloadList;
 }
 
 /**
  * Initializes the info view with metadata and the associated file URL.
  */
-- (id)initWithMetadata:(TDLDownload *)metadata fileURL:(NSURL *)url;
+- (id)initWithMetadata:(TDLDownload *)metadata 
+               fileURL:(NSURL *)url 
+          downloadList:(TDLDownloadList *)downloadList;
 
 /**
  * Dismisses the modal view controller.

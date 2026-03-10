@@ -1,9 +1,24 @@
 #import <Foundation/Foundation.h>
 
+@class TDLDownloadList;
+
 /**
  * An abstract base class for download services.
  */
-@interface TDLService : NSObject
+@interface TDLService : NSObject {
+ @protected
+  TDLDownloadList *_downloadList;
+}
+
+/**
+ * Initializes the service with a download list manager.
+ *
+ * @param downloadList The manager to use for persisting metadata.
+ */
+- (id)initWithDownloadList:(TDLDownloadList *)downloadList;
+
+/** Returns the download list manager. */
+- (TDLDownloadList *)downloadList;
 
 /** Returns the display name of the service. */
 - (NSString *)serviceName;

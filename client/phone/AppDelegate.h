@@ -3,11 +3,22 @@
 /**
  * The primary application delegate for TheDL on iOS.
  */
+@class TDLDownloadList;
+@class TDLServiceManager;
+
 @interface AppDelegate : NSObject <UIApplicationDelegate> {
  @private
   UIWindow *_window;
   UINavigationController *_navigationController;
+  TDLDownloadList *_downloadList;
+  TDLServiceManager *_serviceManager;
 }
+
+/** The central download list manager. */
+- (TDLDownloadList *)downloadList;
+
+/** The manager for download services. */
+- (TDLServiceManager *)serviceManager;
 
 /** Returns the main application window. */
 - (UIWindow *)window;

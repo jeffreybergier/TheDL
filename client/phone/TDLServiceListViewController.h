@@ -1,5 +1,7 @@
 #import <UIKit/UIKit.h>
 
+@class TDLServiceManager;
+
 /**
  * A grouped table view controller for initiating downloads.
  * Layout:
@@ -11,7 +13,13 @@
   UITextView *_urlTextView;
   NSInteger _selectedServiceIndex;
   NSArray *_sampleKeys;
+  TDLServiceManager *_serviceManager;
 }
+
+/**
+ * Initializes the controller with a service manager.
+ */
+- (id)initWithServiceManager:(TDLServiceManager *)serviceManager;
 
 /**
  * Dismisses the modal view controller.

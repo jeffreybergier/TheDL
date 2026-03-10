@@ -12,8 +12,10 @@
   NSMutableArray *_taskList;         // Ordered list for UI
 }
 
-/** Returns the shared instance of the service. */
-+ (TDLCURLRequestService *)sharedService;
+/**
+ * Initializes the service.
+ */
+- (id)initWithDownloadList:(TDLDownloadList *)downloadList;
 
 @end
 

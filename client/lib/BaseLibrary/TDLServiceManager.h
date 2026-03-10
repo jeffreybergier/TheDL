@@ -1,5 +1,7 @@
 #import <Foundation/Foundation.h>
 
+@class TDLDownloadList;
+
 /**
  * Manages the available download services.
  */
@@ -8,8 +10,12 @@
   NSArray *_services;
 }
 
-/** Returns the shared manager instance. */
-+ (TDLServiceManager *)sharedManager;
+/**
+ * Initializes the manager with a download list manager.
+ *
+ * @param downloadList The manager to pass to all services.
+ */
+- (id)initWithDownloadList:(TDLDownloadList *)downloadList;
 
 /** Returns the list of registered TDLService objects. */
 - (NSArray *)availableServices;

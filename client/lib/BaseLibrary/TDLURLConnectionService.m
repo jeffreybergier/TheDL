@@ -6,12 +6,18 @@
 
 @implementation TDLURLConnectionService
 
-+ (TDLURLConnectionService *)sharedService {
-  static TDLURLConnectionService *sharedInstance = nil;
-  if (!sharedInstance) {
-    sharedInstance = [[TDLURLConnectionService alloc] init];
+- (id)initWithDownloadList:(TDLDownloadList *)downloadList {
+  self = [super initWithDownloadList:downloadList];
+  if (self) {
+    _activeTasks = [[NSMutableDictionary alloc] init];
+    _taskList = [[NSMutableArray alloc] init];
+#ifdef DEBUG
+    NSLog(@"[TDLURLConnectionService] DEBUG mode active. Download throttling enabled.");
+#else
+    NSLog(@"[TDLURLConnectionService] RELEASE mode active. No throttling.");
+#endif
   }
-  return sharedInstance;
+  return self;
 }
 
 /**
@@ -42,20 +48,6 @@
     }
   }
   return _networkThread;
-}
-
-- (id)init {
-  self = [super init];
-  if (self) {
-    _activeTasks = [[NSMutableDictionary alloc] init];
-    _taskList = [[NSMutableArray alloc] init];
-#ifdef DEBUG
-    NSLog(@"[TDLURLConnectionService] DEBUG mode active. Download throttling enabled.");
-#else
-    NSLog(@"[TDLURLConnectionService] RELEASE mode active. No throttling.");
-#endif
-  }
-  return self;
 }
 
 - (void)dealloc {
@@ -93,7 +85,8 @@
     lastComponent = @"download.data";
   }
   
-  NSString *downloadsDir = [TDLDownloadList downloadsDirectory];
+  NSURL *downloadsDirURL = [_downloadList downloadsDirectoryURL];
+  NSString *downloadsDir = [downloadsDirURL path];
   NSString *dataPath = [downloadsDir stringByAppendingPathComponent:lastComponent];
 
   // Deduplicate using " (2)" format
@@ -115,7 +108,7 @@
   NSURL *fileURL = [NSURL fileURLWithPath:dataPath];
   
   // Save initial metadata so UI knows we are downloading
-  [[TDLDownloadList sharedList] saveDownload:metadata forURL:fileURL];
+  [_downloadList saveDownload:metadata forURL:fileURL];
   
   TDLDownloadTask *task = [[TDLDownloadTask alloc] initWithTargetURL:fileURL metadata:metadata];
   [metadata release];
@@ -160,7 +153,7 @@
     [metadata setResponseURL:[[response URL] absoluteString]];
     
     // Save metadata immediately so UI can show percentage if content-length is known
-    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    [_downloadList saveDownload:metadata forURL:[task targetFileURL]];
   }
 }
 
@@ -176,7 +169,7 @@
     [handle closeFile];
 
     // Persist metadata to trigger notification
-    [[TDLDownloadList sharedList] saveDownload:[task metadata] forURL:[task targetFileURL]];
+    [_downloadList saveDownload:[task metadata] forURL:[task targetFileURL]];
 
 #ifdef DEBUG
     // LOG CHUNK
@@ -198,7 +191,7 @@
     [metadata setErrorMessage:[error localizedDescription]];
     
     // Save metadata even on failure if we have a file
-    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    [_downloadList saveDownload:metadata forURL:[task targetFileURL]];
     
     @synchronized(_activeTasks) {
       [_activeTasks removeObjectForKey:[NSValue valueWithPointer:connection]];
@@ -216,7 +209,7 @@
     [metadata setState:TDLDownloadStateFinished];
     
     // SAVE TO RESOURCE FORK
-    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    [_downloadList saveDownload:metadata forURL:[task targetFileURL]];
     
     @synchronized(_activeTasks) {
       [_activeTasks removeObjectForKey:[NSValue valueWithPointer:connection]];

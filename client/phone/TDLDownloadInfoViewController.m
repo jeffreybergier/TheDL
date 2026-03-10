@@ -5,11 +5,14 @@
 
 @implementation TDLDownloadInfoViewController
 
-- (id)initWithMetadata:(TDLDownload *)metadata fileURL:(NSURL *)url {
+- (id)initWithMetadata:(TDLDownload *)metadata 
+               fileURL:(NSURL *)url 
+          downloadList:(TDLDownloadList *)downloadList {
   self = [super initWithStyle:UITableViewStyleGrouped];
   if (self) {
     _metadata = [metadata retain];
     _fileURL = [url retain];
+    _downloadList = [downloadList retain];
     [self setTitle:@"Download Info"];
     
     // Extract metadata for display
@@ -24,6 +27,7 @@
   [_fileURL release];
   [_keys release];
   [_data release];
+  [_downloadList release];
   [super dealloc];
 }
 
@@ -56,7 +60,7 @@
 
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
   if (buttonIndex == [actionSheet destructiveButtonIndex]) {
-    [[TDLDownloadList sharedList] deleteFileAtURL:_fileURL];
+    [_downloadList deleteFileAtURL:_fileURL];
     [self dismiss];
   }
 }

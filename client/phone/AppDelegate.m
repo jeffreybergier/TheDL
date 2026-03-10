@@ -1,8 +1,18 @@
 #import "AppDelegate.h"
 #import "TDLDownloadTableViewController.h"
 #import "CrossPlatform.h"
+#import "TDLDownloadList.h"
+#import "TDLServiceManager.h"
 
 @implementation AppDelegate
+
+- (TDLDownloadList *)downloadList {
+  return _downloadList;
+}
+
+- (TDLServiceManager *)serviceManager {
+  return _serviceManager;
+}
 
 - (UIWindow *)window {
   return _window;
@@ -33,10 +43,20 @@
   // Verify libcurl/CrossPlatform linking
   XPLogLibraryVersions();
   
+  // Initialize Managers
+  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+  NSString *documentsDirectory = [paths objectAtIndex:0];
+  NSString *downloadsPath = [documentsDirectory stringByAppendingPathComponent:@"Downloads"];
+  NSURL *downloadsURL = [NSURL fileURLWithPath:downloadsPath];
+  
+  _downloadList = [[TDLDownloadList alloc] initWithDownloadsDirectoryURL:downloadsURL];
+  _serviceManager = [[TDLServiceManager alloc] initWithDownloadList:_downloadList];
+  
   _window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
   [_window setBackgroundColor:[UIColor whiteColor]];
   
-  TDLDownloadTableViewController *downloadVC = [[TDLDownloadTableViewController alloc] init];
+  TDLDownloadTableViewController *downloadVC = [[TDLDownloadTableViewController alloc] initWithDownloadList:_downloadList 
+                                                                                             serviceManager:_serviceManager];
   _navigationController = [[UINavigationController alloc] initWithRootViewController:downloadVC];
   [downloadVC release];
   
@@ -57,6 +77,8 @@
 - (void)dealloc {
   [_navigationController release];
   [_window release];
+  [_downloadList release];
+  [_serviceManager release];
   [super dealloc];
 }
 

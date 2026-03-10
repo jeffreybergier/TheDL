@@ -8,16 +8,8 @@
 
 @implementation TDLCURLRequestService
 
-+ (TDLCURLRequestService *)sharedService {
-  static TDLCURLRequestService *sharedInstance = nil;
-  if (!sharedInstance) {
-    sharedInstance = [[TDLCURLRequestService alloc] init];
-  }
-  return sharedInstance;
-}
-
-- (id)init {
-  self = [super init];
+- (id)initWithDownloadList:(TDLDownloadList *)downloadList {
+  self = [super initWithDownloadList:downloadList];
   if (self) {
     _activeTasks = [[NSMutableDictionary alloc] init];
     _taskList = [[NSMutableArray alloc] init];
@@ -52,7 +44,8 @@
     lastComponent = @"download.data";
   }
   
-  NSString *downloadsDir = [TDLDownloadList downloadsDirectory];
+  NSURL *downloadsDirURL = [_downloadList downloadsDirectoryURL];
+  NSString *downloadsDir = [downloadsDirURL path];
   NSString *dataPath = [downloadsDir stringByAppendingPathComponent:lastComponent];
   
   // Deduplicate
@@ -70,18 +63,12 @@
     }
   }
   
-  // Ensure directory exists
-  [[NSFileManager defaultManager] createDirectoryAtPath:downloadsDir 
-                            withIntermediateDirectories:YES 
-                                             attributes:nil 
-                                                  error:NULL];
-  
   // Create empty file
   [[NSData data] writeToFile:dataPath atomically:YES];
   NSURL *fileURL = [NSURL fileURLWithPath:dataPath];
   
   // Save initial metadata so UI knows we are downloading
-  [[TDLDownloadList sharedList] saveDownload:metadata forURL:fileURL];
+  [_downloadList saveDownload:metadata forURL:fileURL];
   
   TDLDownloadTask *task = [[TDLDownloadTask alloc] initWithTargetURL:fileURL metadata:metadata];
   [metadata release];
@@ -136,7 +123,7 @@
     }
     
     // Save metadata immediately so UI can show percentage if content-length is known
-    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    [_downloadList saveDownload:metadata forURL:[task targetFileURL]];
   }
 }
 
@@ -149,7 +136,7 @@
     [handle closeFile];
     
     // Persist metadata to trigger notification
-    [[TDLDownloadList sharedList] saveDownload:[task metadata] forURL:[task targetFileURL]];
+    [_downloadList saveDownload:[task metadata] forURL:[task targetFileURL]];
   }
 }
 
@@ -160,7 +147,7 @@
     [metadata setState:TDLDownloadStateFailed];
     [metadata setErrorMessage:[error localizedDescription]];
     
-    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    [_downloadList saveDownload:metadata forURL:[task targetFileURL]];
     [_activeTasks removeObjectForKey:[NSValue valueWithPointer:request]];
   }
 }
@@ -177,7 +164,7 @@
       [metadata setContentSize:[attrs fileSize]];
     }
     
-    [[TDLDownloadList sharedList] saveDownload:metadata forURL:[task targetFileURL]];
+    [_downloadList saveDownload:metadata forURL:[task targetFileURL]];
     [_activeTasks removeObjectForKey:[NSValue valueWithPointer:request]];
   }
 }

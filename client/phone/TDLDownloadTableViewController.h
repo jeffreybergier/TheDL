@@ -2,6 +2,9 @@
 
 @class TDLDownload;
 
+@class TDLDownloadList;
+@class TDLServiceManager;
+
 /**
  * A table view controller for displaying the list of downloads on iOS.
  */
@@ -9,7 +12,15 @@
  @private
   NSArray *_downloads;
   TDLDownload *_selectedDownload;
+  TDLDownloadList *_downloadList;
+  TDLServiceManager *_serviceManager;
 }
+
+/**
+ * Initializes the controller with the necessary managers.
+ */
+- (id)initWithDownloadList:(TDLDownloadList *)downloadList 
+            serviceManager:(TDLServiceManager *)serviceManager;
 
 /**
  * Adds a new download by presenting the service list.
