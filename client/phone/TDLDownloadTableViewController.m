@@ -10,14 +10,12 @@
 
 @implementation TDLDownloadTableViewController
 
-- (id)initWithDownloadList:(TDLDownloadList *)downloadList 
-            serviceManager:(TDLServiceManager *)serviceManager {
+- (id)initWithDownloadList:(TDLDownloadList *)downloadList {
   self = [super initWithStyle:UITableViewStylePlain];
   if (self) {
     [self setTitle:@"TheDL"];
     _downloads = [[NSArray alloc] init];
     _downloadList = [downloadList retain];
-    _serviceManager = [serviceManager retain];
     
     [[NSNotificationCenter defaultCenter] addObserver:self 
                                              selector:@selector(handleDownloadUpdated:) 
@@ -32,7 +30,6 @@
   [_downloads release];
   [_selectedDownload release];
   [_downloadList release];
-  [_serviceManager release];
   [super dealloc];
 }
 
@@ -79,7 +76,7 @@
 }
 
 - (void)addDownload {
-  TDLServiceListViewController *serviceVC = [[TDLServiceListViewController alloc] initWithServiceManager:_serviceManager];
+  TDLServiceListViewController *serviceVC = [[TDLServiceListViewController alloc] initWithServiceManager:[_downloadList serviceManager]];
   UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:serviceVC];
   [self presentModalViewController:nav animated:YES];
   [serviceVC release];

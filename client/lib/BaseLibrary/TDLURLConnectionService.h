@@ -1,12 +1,16 @@
+#import <Foundation/Foundation.h>
 #import "TDLService.h"
+
+@class TDLDownloadList;
 
 /**
  * A service that uses NSURLConnection to fetch data.
  */
-@interface TDLURLConnectionService : TDLService {
+@interface TDLURLConnectionService : NSObject <TDLService> {
  @private
   NSMutableDictionary *_activeTasks; // NSURLConnection -> TDLDownloadTask
   NSMutableArray *_taskList;         // Ordered list for UI
+  TDLDownloadList *_downloadList;
 }
 
 /**

@@ -9,7 +9,7 @@ LIB_INCLUDES = -I. -I$(XP_DIR) $(CURL_INC)
 
 # Source
 SRCS = TDLDownload.m TDLDownloadList.m \
-	TDLService.m TDLDownloadTask.m \
+	TDLDownloadTask.m \
 	TDLURLConnectionService.m TDLCURLRequestService.m TDLServiceManager.m
 
 TEST_SRCS = tests/TDLDownloadTests.m tests/TDLURLConnectionServiceTests.m

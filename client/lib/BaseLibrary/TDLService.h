@@ -1,24 +1,9 @@
 #import <Foundation/Foundation.h>
 
-@class TDLDownloadList;
-
 /**
- * An abstract base class for download services.
+ * A protocol that defines the interface for download services.
  */
-@interface TDLService : NSObject {
- @protected
-  TDLDownloadList *_downloadList;
-}
-
-/**
- * Initializes the service with a download list manager.
- *
- * @param downloadList The manager to use for persisting metadata.
- */
-- (id)initWithDownloadList:(TDLDownloadList *)downloadList;
-
-/** Returns the download list manager. */
-- (TDLDownloadList *)downloadList;
+@protocol TDLService <NSObject>
 
 /** Returns the display name of the service. */
 - (NSString *)serviceName;
@@ -34,16 +19,8 @@
 - (void)fetchURL:(NSURL *)url;
 
 /**
- * Returns a list of active or recently failed download tasks.
- *
- * @return An NSArray of task descriptions or objects.
+ * Returns a list of active download tasks.
  */
 - (NSArray *)activeTasks;
-
-/**
- * Returns a dictionary of sample URLs for testing.
- * Keys are display names, values are URL strings.
- */
-+ (NSDictionary *)sampleURLs;
 
 @end

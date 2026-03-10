@@ -2,6 +2,8 @@
 
 @class TDLDownload;
 
+@class TDLServiceManager;
+
 /** Notification posted when a download is updated. UserInfo contains the NSURL. */
 extern NSString *const TDLDownloadListUpdatedNotification;
 
@@ -12,6 +14,7 @@ extern NSString *const TDLDownloadListUpdatedNotification;
 @interface TDLDownloadList : NSObject {
  @private
   NSURL *_downloadsDirectoryURL;
+  TDLServiceManager *_serviceManager;
 }
 
 /**
@@ -25,6 +28,16 @@ extern NSString *const TDLDownloadListUpdatedNotification;
  * Returns the URL to the directory where downloads are stored.
  */
 - (NSURL *)downloadsDirectoryURL;
+
+/**
+ * Returns the service manager for this list.
+ */
+- (TDLServiceManager *)serviceManager;
+
+/**
+ * Returns a dictionary of sample URLs for testing.
+ */
++ (NSDictionary *)sampleURLs;
 
 /**
  * Returns all download file URLs in the downloads directory sorted by modification date.

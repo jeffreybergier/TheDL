@@ -1,5 +1,6 @@
 #import "TDLServiceListViewController.h"
 #import "TDLServiceManager.h"
+#import "TDLDownloadList.h"
 #import "TDLService.h"
 #import "CrossPlatform.h"
 
@@ -13,7 +14,7 @@
     _serviceManager = [serviceManager retain];
     
     // Setup sorted sample keys
-    NSDictionary *samples = [TDLService sampleURLs];
+    NSDictionary *samples = [TDLDownloadList sampleURLs];
     _sampleKeys = [[[samples allKeys] sortedArrayUsingSelector:@selector(compare:)] retain];
   }
   return self;
@@ -85,7 +86,7 @@
 
   NSArray *services = [_serviceManager availableServices];
   if (_selectedServiceIndex < [services count]) {
-    TDLService *service = [services objectAtIndex:_selectedServiceIndex];
+    id<TDLService> service = [services objectAtIndex:_selectedServiceIndex];
     [service fetchURL:url];
     [self dismiss];
   }
@@ -165,7 +166,7 @@
                                      reuseIdentifier:ServiceCellID] autorelease];
     }
     
-    TDLService *service = [[_serviceManager availableServices] objectAtIndex:[indexPath row]];
+    id<TDLService> service = [[_serviceManager availableServices] objectAtIndex:[indexPath row]];
     [[cell textLabel] setText:[service serviceName]];
     
     if ([indexPath row] == _selectedServiceIndex) {
@@ -185,7 +186,7 @@
     }
     
     NSString *key = [_sampleKeys objectAtIndex:[indexPath row]];
-    NSString *url = [[TDLService sampleURLs] objectForKey:key];
+    NSString *url = [[TDLDownloadList sampleURLs] objectForKey:key];
     
     [[cell textLabel] setText:key];
     [[cell detailTextLabel] setText:url];
@@ -207,7 +208,7 @@
     [tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationNone];
   } else if ([indexPath section] == 2) {
     NSString *key = [_sampleKeys objectAtIndex:[indexPath row]];
-    NSString *url = [[TDLService sampleURLs] objectForKey:key];
+    NSString *url = [[TDLDownloadList sampleURLs] objectForKey:key];
     [_urlTextView setText:url];
     [_urlTextView resignFirstResponder];
     // Scroll back to top to see the filled URL

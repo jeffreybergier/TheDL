@@ -11,7 +11,7 @@
 }
 
 - (TDLServiceManager *)serviceManager {
-  return _serviceManager;
+  return [_downloadList serviceManager];
 }
 
 - (UIWindow *)window {
@@ -50,13 +50,11 @@
   NSURL *downloadsURL = [NSURL fileURLWithPath:downloadsPath];
   
   _downloadList = [[TDLDownloadList alloc] initWithDownloadsDirectoryURL:downloadsURL];
-  _serviceManager = [[TDLServiceManager alloc] initWithDownloadList:_downloadList];
   
   _window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
   [_window setBackgroundColor:[UIColor whiteColor]];
   
-  TDLDownloadTableViewController *downloadVC = [[TDLDownloadTableViewController alloc] initWithDownloadList:_downloadList 
-                                                                                             serviceManager:_serviceManager];
+  TDLDownloadTableViewController *downloadVC = [[TDLDownloadTableViewController alloc] initWithDownloadList:_downloadList];
   _navigationController = [[UINavigationController alloc] initWithRootViewController:downloadVC];
   [downloadVC release];
   
@@ -78,7 +76,6 @@
   [_navigationController release];
   [_window release];
   [_downloadList release];
-  [_serviceManager release];
   [super dealloc];
 }
 

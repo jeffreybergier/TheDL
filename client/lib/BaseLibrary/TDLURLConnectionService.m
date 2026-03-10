@@ -7,8 +7,9 @@
 @implementation TDLURLConnectionService
 
 - (id)initWithDownloadList:(TDLDownloadList *)downloadList {
-  self = [super initWithDownloadList:downloadList];
+  self = [super init];
   if (self) {
+    _downloadList = [downloadList retain];
     _activeTasks = [[NSMutableDictionary alloc] init];
     _taskList = [[NSMutableArray alloc] init];
 #ifdef DEBUG

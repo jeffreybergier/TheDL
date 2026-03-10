@@ -13,14 +13,12 @@
   NSArray *_downloads;
   TDLDownload *_selectedDownload;
   TDLDownloadList *_downloadList;
-  TDLServiceManager *_serviceManager;
 }
 
 /**
- * Initializes the controller with the necessary managers.
+ * Initializes the controller with a download list.
  */
-- (id)initWithDownloadList:(TDLDownloadList *)downloadList 
-            serviceManager:(TDLServiceManager *)serviceManager;
+- (id)initWithDownloadList:(TDLDownloadList *)downloadList;
 
 /**
  * Adds a new download by presenting the service list.

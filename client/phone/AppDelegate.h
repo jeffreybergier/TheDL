@@ -11,7 +11,6 @@
   UIWindow *_window;
   UINavigationController *_navigationController;
   TDLDownloadList *_downloadList;
-  TDLServiceManager *_serviceManager;
 }
 
 /** The central download list manager. */
