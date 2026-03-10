@@ -47,6 +47,15 @@ extern NSString *const TDLDownloadListUpdatedNotification;
 - (NSArray *)allDownloads;
 
 /**
+ * Returns a unique local file URL for a given remote download URL.
+ * Handles filename generation (including host) and deduplication.
+ *
+ * @param url The remote URL being downloaded.
+ * @return A local file URL in the downloads directory.
+ */
+- (NSURL *)targetURLForDownloadURL:(NSURL *)url;
+
+/**
  * Loads and returns a TDLDownload metadata object from a file's resource fork.
  *
  * @param url The URL to the data file.

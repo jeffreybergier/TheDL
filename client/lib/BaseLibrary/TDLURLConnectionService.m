@@ -81,32 +81,11 @@
   [metadata setServiceIdentifier:[self serviceIdentifier]];
   [metadata setState:TDLDownloadStateDownloading];
   
-  NSString *lastComponent = [[url path] lastPathComponent];
-  if (!lastComponent || [lastComponent length] == 0) {
-    lastComponent = @"download.data";
-  }
+  NSURL *fileURL = [_downloadList targetURLForDownloadURL:url];
+  NSString *dataPath = [fileURL path];
   
-  NSURL *downloadsDirURL = [_downloadList downloadsDirectoryURL];
-  NSString *downloadsDir = [downloadsDirURL path];
-  NSString *dataPath = [downloadsDir stringByAppendingPathComponent:lastComponent];
-
-  // Deduplicate using " (2)" format
-  if ([[NSFileManager defaultManager] fileExistsAtPath:dataPath]) {
-    NSString *base = [lastComponent stringByDeletingPathExtension];
-    NSString *ext = [lastComponent pathExtension];
-    int counter = 2;
-    while ([[NSFileManager defaultManager] fileExistsAtPath:dataPath]) {
-      NSString *newName = [NSString stringWithFormat:@"%@ (%d)", base, counter];
-      if ([ext length] > 0) {
-        newName = [newName stringByAppendingPathExtension:ext];
-      }
-      dataPath = [downloadsDir stringByAppendingPathComponent:newName];
-      counter++;
-    }
-  }
   // Create empty file
   [[NSData data] writeToFile:dataPath atomically:YES];
-  NSURL *fileURL = [NSURL fileURLWithPath:dataPath];
   
   // Save initial metadata so UI knows we are downloading
   [_downloadList saveDownload:metadata forURL:fileURL];

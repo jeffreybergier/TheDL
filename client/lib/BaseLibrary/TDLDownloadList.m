@@ -88,6 +88,40 @@ static NSString *const kTDLMetadataXattrName = @"com.kumasan.thedl.metadata";
   return sortedFiles;
 }
 
+- (NSURL *)targetURLForDownloadURL:(NSURL *)url {
+  if (!url) return nil;
+  
+  NSString *lastComponent = [[url path] lastPathComponent];
+  if (!lastComponent || [lastComponent length] == 0) {
+    lastComponent = @"download.data";
+  }
+  
+  // Prepend host to filename if available
+  if ([url host]) {
+    lastComponent = [NSString stringWithFormat:@"%@-%@", [url host], lastComponent];
+  }
+  
+  NSString *downloadsDir = [_downloadsDirectoryURL path];
+  NSString *dataPath = [downloadsDir stringByAppendingPathComponent:lastComponent];
+
+  // Deduplicate using " (2)" format
+  if ([[NSFileManager defaultManager] fileExistsAtPath:dataPath]) {
+    NSString *base = [lastComponent stringByDeletingPathExtension];
+    NSString *ext = [lastComponent pathExtension];
+    int counter = 2;
+    while ([[NSFileManager defaultManager] fileExistsAtPath:dataPath]) {
+      NSString *newName = [NSString stringWithFormat:@"%@ (%d)", base, counter];
+      if ([ext length] > 0) {
+        newName = [newName stringByAppendingPathExtension:ext];
+      }
+      dataPath = [downloadsDir stringByAppendingPathComponent:newName];
+      counter++;
+    }
+  }
+  
+  return [NSURL fileURLWithPath:dataPath];
+}
+
 - (TDLDownload *)getTDLDownloadForURL:(NSURL *)url {
   if (!url) return nil;
   
